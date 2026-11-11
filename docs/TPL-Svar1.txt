@@ -1,0 +1,20 @@
+Steg 1: Direktivet
+
+Jag har läst hela direktivet (version 1.3, 2026-11-11, alla 7 sidor). Ert meddelande har kvar mallens platshållare. Enligt direktivet är ni grupp G11. Antalet medlemmar står inte där, så jag frågar om det nedan.
+
+Projektets namn: “Hushållsbudgeten”
+
+Entiteterna i K1: “Systemet ska hantera konton, transaktioner och budgetposter.”
+
+Operationerna i K6: “lägg till konto, hantera budgetpost (skapa, aktivera, avsluta), registrera transaktion, visa ett kontos transaktioner och saldo, visa månadssammanställning, spara, öppna, avsluta”
+
+Jag har också tittat i den repomapp ni delade. Den innehåller en enda commit (“test”) och filen docs/test.txt. AGENTS.md och docs/tpl-brief.md finns inte ännu. Det spelar roll för kodagentens startprompt, som ska börja med att agenten läser AGENTS.md.
+
+Steg 2: Frågor
+Språk och testramverk: Vilket programmeringsspråk och vilket testramverk har ni valt, och vilken version av körmiljön (till exempel Python 3.12 med pytest, eller Java 21 med JUnit 5)? Direktivet kräver att README:s två kommandon fungerar på en dator där bara språkets körmiljö finns (avsnitt 5, AK7.1). Har ni tänkt på det i valet av testramverk?
+Gränssnitt: Blir det CLI eller GUI? Ska gränssnittet vara på svenska eller engelska?
+Verktyg, system och storlek: Vilket verktyg använder ni som designer-AI och vilket som kodagent? Vilka operativsystem har ni (Windows, macOS, Linux)? Hur många är ni i gruppen?
+Design och status: Hur ser modulindelningen ut i er design? Jag behöver modulernas namn och vad varje modul ansvarar för, enligt kravet på logik, gränssnitt och filhantering i separata moduler (K7 d). Hur långt har ni kommit med del A (kravanalys) och del B (design)?
+Beställarsvar och AGENTS.md: Vilka frågor har ni ställt i Canvas-tråden, och vilka svar har ni fått? Vem skriver AGENTS.md? Kodagentens startprompt förutsätter att filen finns innan agenten börjar. Antingen skriver ni den själva först, eller så får agenten skapa den som en del av skelettet efter er granskning. Ni bestämmer.
+
+När jag har era svar skriver jag de två startprompterna. Saknas underlag för någon av dem väntar jag med just den och säger vad som fattas.
