@@ -23,3 +23,6 @@
 - Ta bort eller ändra tester för att få dem gröna.
 - Lägga in personuppgifter i kod, tester eller exempeldata.
 - Köra kommandon som ändrar filer utanför repot.
+
+## Commits
+- Commit ALDRIG något utan att fråga först.
