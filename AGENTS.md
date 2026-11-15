@@ -1,7 +1,11 @@
-# Projekt: ⟨namn⟩ (ISGB04, grupp G⟨nn⟩)
+# Projekt: Hushållsbudgeten (ISGB04, grupp G11)
 
 ## Vad systemet gör
-⟨Två meningar ur projektdirektivet.⟩
+Studentbostadsföreningen Kollektivet Sandgrund i Karlstad driver ett gemensamt hushåll för tolv boende med ett lönekonto
+för inbetalningar och räkningar, ett sparkonto för större inköp och ett kreditkort för löpande utgifter.
+Föreningen vill ha ett litet program
+där kassören kan lägga upp konton och budgetposter, registrera transaktioner med automatisk kontroll mot kontots regler,
+få en månadssammanställning mot budgeten uträknad enligt föreningens regler och spara allt till fil.
 
 ## Arkitektur
 - Moduler: `model/` (entiteter och regler, K1–K3), `logic/` (algoritm K4), `storage/` (filformat K5), `ui/` (gränssnitt K6), `tests/`.
@@ -9,8 +13,9 @@
 - Designen finns i `docs/design.md` (klassdiagram, modulkontrakt) och gränssnittets design i `docs/design-extern.md` (godkänd av produktägaren). Följ dem. Föreslå ändringar i stället för att avvika tyst.
 
 ## Språk och verktyg
-- Språk: ⟨…⟩, version ⟨…⟩. Testramverk: ⟨…⟩.
-- Starta: `⟨kommando⟩`. Testa: `⟨kommando⟩`. Kör testerna efter varje ändring och rapportera resultatet.
+- Språk: JavaScript (Node.js, ES-moduler), version Node.js 22 LTS (minst 20). Testramverk: Nodes inbyggda `node:test` med `node:assert`.
+- Starta: `node src/ui/meny.js`. 
+- Testa: `node --test`. Kör testerna efter varje ändring och rapportera resultatet.
 
 ## Regler för ändringar
 - Arbeta med en backlog-post (issue) i taget. Ändra bara filer som posten kräver.
