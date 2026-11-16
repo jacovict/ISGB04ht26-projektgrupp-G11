@@ -16,6 +16,7 @@ få en månadssammanställning mot budgeten uträknad enligt föreningens regler
 - Språk: JavaScript (Node.js, ES-moduler), version Node.js 22 LTS (minst 20). Testramverk: Nodes inbyggda `node:test` med `node:assert`.
 - Starta: `node src/ui/meny.js`. 
 - Testa: `node --test`. Kör testerna efter varje ändring och rapportera resultatet.
+- Byt namn på funktioner och variabler till camelCase om de inte redan följer den regeln.
 
 ## Regler för ändringar
 - Arbeta med en backlog-post (issue) i taget. Ändra bara filer som posten kräver.
