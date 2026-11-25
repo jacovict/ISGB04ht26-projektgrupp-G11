@@ -1,6 +1,6 @@
 **Design – Hushållsbudgeten (G11)**
 
-Version 1.4, 2026-11-25. Lab 2 del B, uppdaterad i Lab 3 sprint 1. Uppdateras när designen ändras (ÄB1).
+Version 1.5, 2026-11-25. Lab 2 del B, uppdaterad i Lab 3 sprint 1. Uppdateras när designen ändras (ÄB1).
 
 # 1. Språk, ramverk och kommandon
 
@@ -13,7 +13,7 @@ Version 1.4, 2026-11-25. Lab 2 del B, uppdaterad i Lab 3 sprint 1. Uppdateras n�
 | **Modul/paket** | **Innehåll** | **Får importera** |
 |---|---|---|
 | src/model/ | Entiteter, tillstånd, regler, varianter (K1–K3):<br>Hushall, Konto (abstrakt), Lönekonto, Sparkonto, Kreditkort, Kontotyper (singleton), Budgetpost, Transaktion, Status och felklasserna ValideringsFel, DubblettFel, SaknasFel, RegelFel, StatusFel och FilformatFel samt kategori.js: normaliseraKategori(k) som ger jämförelsen (trim + gemener) och visningsnamn(k) som ger stor första bokstav visningsnamn(k) som ger stor första bokstav och formateraBelopp(belopp) som ger beloppet i hela kronor med vanligt mellanslag (U+0020) som tusentalsavgränsare, minustecknet − (U+2212) för negativa belopp och " kr" på slutet, t.ex. "−1 200 kr" (används i felmeddelandena E-K8 och E-T6), samt kontrollfunktionerna kontrolleraKategori (kategori.js), kontrolleraManad (budgetpost.js), kontrolleraKontonamn och kontrolleraIngaendeSaldo (konto.js), så att samma kontroll ger samma felmeddelande överallt |
-| src/logic/ | Månadssammanställning, Algoritm K4 | model |
+| | src/logic/ | manadssammanstallning.js: manadssammanstallning(hushall, manad) enligt avsnitt 5 (Algoritm K4) och kontraktet i avsnitt 4 | | model |
 | src/storage/ | fil.js: läser och skriver filen på disk med node:fs. sokvag(filnamn) ger sökvägen relativt projektets rotmapp (standard data/hushall.txt). lasFil(filnamn): Hushall läser filen i UTF-8 och anropar lasHushall. sparaFil(hushall, filnamn) anropar skrivHushall, skriver filen och skapar mappen data/ om den saknas.<br>filformat.js: lasHushall(text) och skrivHushall(hushall) enligt avsnitt 6 Filformat K5 (bara text, ingen disk).<br>server.js använder aldrig node:fs (K7 d) | model |
 | src/ui/ | Server (controller, server.js): tar emot anropen i API-tabellen, anropar model, logic och storage och svarar med JSON. Ingen affärslogik (AK6.3). | model, logic, storage |
 | tests/ | Tester, en fil per krav (t.ex. k3.kontotyper.test.js, k5.filformat.test.js). Testfilerna namnges \*.test.js. | alla |
@@ -95,7 +95,7 @@ Alla anrop skickar och tar emot JSON. Vid fel svarar servern med statuskod 400 o
 |---|---|---|---|
 | Kontotyper.hamta() | – | Returnerar alltid samma instans; första anropet skapar den med registret Lönekonto, Sparkonto och Kreditkort | – (kan inte misslyckas). new Kontotyper() utanför klassen saknar den hemliga nyckeln och kastar Error("Använd Kontotyper.hamta()") när programmet körs. |
 | Kontotyper.skapa(typ, namn, ingaendeSaldo) | typ finns i typer(); namn är inte tomt; ingaendeSaldo är ett heltal som är tillåtet för typen (≥ 0 för Lönekonto och Sparkonto, ≥ −10 000 för Kreditkort) | Returnerar ett nytt konto av rätt subklass med 0 transaktioner; saldo() = ingaendeSaldo och kontotyp() = typ | Kastar ValideringsFel; inget konto skapas |
-| Hushall.laggTillKonto(k) | Inget konto i hushållet har samma namn (K1) | k finns i hamtaKonton(); antalet konton har ökat med 1 | Kastar DubblettFel; hushållet oförändrat |
+| Hushall.laggTillKonto(k) | | Inget konto i hushållet har samma namn utan hänsyn till stora och små bokstäver (K1, beslut 6); namnet lagras och visas som det skrevs | | k finns i hamtaKonton(); antalet konton har ökat med 1 | Kastar DubblettFel; hushållet oförändrat |
 | Hushall.registreraTransaktion(kontonamn, datum, kategori, belopp, beskrivning) | Kontot finns (AK2.1); datum har formen ÅÅÅÅ-MM-DD och är ett giltigt datum; belopp är ett heltal ≠ 0 (AK1.3); kategori är inte tom; kontots regel godtar det nya saldot (K3) | Kontot har exakt en transaktion till; nytt saldo = gammalt saldo + belopp; övriga konton oförändrade | Kastar SaknasFel, ValideringsFel eller RegelFel; alla konton oförändrade |
 | Konto.laggTillTransaktion(t) | t är en giltig Transaktion | Om tillaten(t.belopp, saldo() + t.belopp) är sant läggs t sist i kontots lista och metoden returnerar true. Gränsvärden enligt AK3.1: Lönekonto med saldo 12 000 godtar −12 000; Kreditkort med saldo 0 godtar −10 000 | Returnerar false; kontot oförändrat (−12 001 respektive −10 001 nekas) |
 | Hushall.taBortKonto(namn) | Kontot finns; kontot har 0 transaktioner (K2) | Kontot finns inte längre i hamtaKonton(); övriga konton oförändrade | Kastar SaknasFel eller RegelFel; hushållet oförändrat (AK2.2) |
@@ -106,9 +106,10 @@ Alla anrop skickar och tar emot JSON. Vid fel svarar servern med statuskod 400 o
 | Hushall.beraknaRanta(kontonamn, manad) | Kontot finns; manad har formen ÅÅÅÅ-MM; ingen transaktion i kategorin Ränta är redan bokförd på kontot för månaden | Låt r = ⌊lagstaSaldo(manad) × rantesats()⌋. Om r \> 0 läggs en transaktion till med datum = månadens sista dag, belopp = r och kategori = Ränta, och den returneras. Annars returneras null och kontot är oförändrat. Exempel (AK3.1): Spar i november ger 100; Lön ger null | Kastar SaknasFel, ValideringsFel eller DubblettFel; kontot oförändrat |
 | filformat.lasHushall(text) | text är filens innehåll | Returnerar ett nytt Hushall med exakt filens konton, transaktioner, budgetposter och statusar (AK5.1) | Kastar FilformatFel med radnummer och orsak (AK5.2–5.4); befintlig data i minnet är orörd (K5) |
 | filformat.skrivHushall(hushall) | hushall är ett giltigt Hushall | Returnerar text enligt avsnitt 6 som lasHushall läser tillbaka till samma data (AK5.1) | – |
-| Hushall.andraKonto(namn, nyttNamn, nyttIngaendeSaldo) | Kontot finns; nyttNamn är inte tomt och inget annat konto har det namnet (K1); nyttIngaendeSaldo är ett heltal och, om det ingående saldot ändras, godtar kontotypen tillaten(ändring, nytt saldo), där ändring = nytt ingående saldo − gammalt. Ett rent namnbyte prövas inte mot kontotypen. Kommer från Designer AI:s fråga F7 | Kontot har nytt namn och nytt ingående saldo; transaktionerna är oförändrade | Kastar SaknasFel, DubblettFel, ValideringsFel eller RegelFel; kontot oförändrat |
+| Hushall.andraKonto(namn, nyttNamn, nyttIngaendeSaldo) | Kontot finns; nyttNamn är inte tomt och inget annat konto har det namnet utan hänsyn till stora och små bokstäver (K1, beslut 6); nyttIngaendeSaldo är ett heltal och, om det ingående saldot ändras, godtar kontotypen tillaten(ändring, nytt saldo), där ändring = nytt ingående saldo − gammalt. Ett rent namnbyte prövas inte mot kontotypen. Kommer från Designer AI:s fråga F7 | Kontot har nytt namn och nytt ingående saldo; transaktionerna är oförändrade | Kastar SaknasFel, DubblettFel, ValideringsFel eller RegelFel; kontot oförändrat |
 | fil.lasFil(filnamn) | filnamn anges relativt projektets rotmapp; standard är data/hushall.txt. | returnerar ett nytt Hushall enligt filformat.lasHushall (AK5.1). | Vid regelbrott: filen finns inte → kastar SaknasFel. Filens innehåll är trasigt → FilformatFel från lasHushall, med rad och orsak (AK5.2–5.4). I båda fallen är data i minnet orörd; servern byter hushåll bara om inget fel kastas (K5). |
 | fil.sparaFil(hushall, filnamn) | hushall är ett giltigt Hushall; filnamn som ovan. | mappen data/ skapas om den saknas; filen innehåller skrivHushall(hushall); lasFil läser tillbaka samma data (AK5.1). | filen kan inte skrivas → kastar FilformatFel; hushållet i minnet är oförändrat.<br>Felmeddelandenas text står ordagrant i design-extern.md 4.4 (E-F2, E-F3, E-F4). |
+| logic.manadssammanstallning(hushall, manad) | hushall är ett giltigt Hushall; manad har formen ÅÅÅÅ-MM | Returnerar en ny lista med rader { kategori, budget, utfall, avvikelse, andel } enligt avsnitt 5, sorterad enligt steg 4. kategori = visningsnamn; budget = heltal eller "–" (U+2013); utfall och avvikelse = heltal; andel = text med en decimal, decimalkomma och " %" (U+0020 före %), eller "–". Hushållet ändras inte, och samma indata ger alltid samma lista (K4). En månad utan transaktioner och budgetposter ger en tom lista (AK4.2). | Kastar ValideringsFel (E-M1); hushållet oförändrat |
 
 # 
 
@@ -239,7 +240,7 @@ SLUT
 
 - Motivering av formatvalet: Formatet är lättläst och går enkelt att dela upp i JavaScript utan externa bibliotek.
 - Tom rad hoppas över
-
+- Kontonamn jämförs utan hänsyn till stora och små bokstäver vid inläsning (beslut 6): en transaktion med kontot "lön" hör till kontot "Lön". Två konton med samma namn i filen, även med olika skiftläge, ger FilformatFel: Rad {n}: kontot "{namn}" finns redan i filen.
 - Sparas data/hushall.txt
 
 - Repot levereras med räkneexemplet som data/hushall.txt.
@@ -304,7 +305,8 @@ Kort;2026-11-30;-300;Hälsa;Apotek
 | 2026-11-25 | formateraBelopp(belopp) i model/kategori.js formaterar belopp i felmeddelanden enligt design-extern.md avsnitt 1. | Felmeddelandena E-K8 och E-T6 skapas i model/ och innehåller belopp; design.md angav inte var formateringen ligger. Webbvy får inte räkna (AK6.3). | model/kategori.js |
 | 2026-11-25 | Konto har setters för namn och ingående saldo, och model/ har kontrollfunktioner för kategori, månad, kontonamn och ingående saldo. | Kodagentens implementation av #1: andraKonto måste kunna ändra kontot, och samma kontroll ska ge samma felmeddelande överallt. Godkänt av PO. | model/konto.js, kategori.js, budgetpost.js |
 | 2026-11-25 | I andraKonto prövas kontotypens regel bara när det ingående saldot ändras, med ändringen som belopp. | Kontraktet angav inte beloppet; utan detta skulle ett namnbyte på ett Barnkonto (AK3.3) nekas. Godkänt av PO. | model/hushall.js |
-| 2026-11-25 | Kontonamn jämförs exakt ("Lön" och "lön" är olika konton), provisoriskt. | Beslut 4 gäller kategorier; frågan om kontonamn är ställd till beställaren (fråga 6). | model/hushall.js |
+| 2026-11-25 | Kontonamn jämförs med samma normalisering som kategorier (trim + gemener) och visas som de skrevs när kontot skapades; samma jämförelse gäller när en fil öppnas. Ersätter det provisoriska beslutet om exakt jämförelse. | Beställarbeslut 6. | model/hushall.js, storage/filformat.js |
+| 2026-11-25 | Kontrakt för manadssammanstallning(hushall, manad) med radformatet från testprotokollet (T19). | Testerna för K4 kodas i #3 och behöver funktionens namn och returvärde; arbetsregel 3 kräver ett kontrakt före varje kodagentrunda. | logic/ |
 # När designen är klar: textversion för kodagenten
 
 | **Det här steget gör TPL åt er – men bara omvandlingen, inte innehållet.**<br>1. Klistra in eller ladda upp det här dokumentet hos TPL med uppdraget: ”Här är vår design. Gör om den till markdown ordagrant: samma rubriker, tabeller och formuleringar. Lägg inte till, ta inte bort och förbättra ingenting. Skriv [bild] där klassdiagrammets bild står. Svara bara med markdown-texten.”<br>2. Spara svaret som docs/design.md (ny fil i VS Code, klistra in, spara).<br>3. Läs textversionen mot det här dokumentet. Stämmer något inte: rätta i design.md eller be om en ny omvandling.<br>4. Committa båda filerna och notera omvandlingen i AI-loggen.<br>5. När designen ändras: ändra först här i Word-filen och gör sedan om steg 1–4. |
