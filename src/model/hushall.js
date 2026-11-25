@@ -18,9 +18,17 @@ export class Hushall {
     this.#konton.push(k);
   }
 
-  // Platshållare – implementeras i backlog-post #2 (K2, AK2.2).
+  // Tar bort kontot om det saknar transaktioner (K2, AK2.2). Kontot finns inte → SaknasFel (E-K6);
+  // kontot har transaktioner → RegelFel (E-K7). Hushållet ändras bara om inget fel kastas.
   taBortKonto(namn) {
-    throw new Error('Hushall.taBortKonto är inte implementerad än (backlog-post #2).');
+    const konto = this.hittaKonto(namn);
+    const antal = konto.hamtaTransaktioner().length;
+    if (antal > 0) {
+      throw new RegelFel(
+        `Kontot "${konto.namn}" kan inte tas bort eftersom det har ${antal} transaktioner. Bara ett konto utan transaktioner kan tas bort.`
+      );
+    }
+    this.#konton = this.#konton.filter((k) => k !== konto);
   }
 
   hamtaKonton() {
@@ -88,9 +96,20 @@ export class Hushall {
     return t;
   }
 
-  // Skapar en budgetpost med status Planerad. Kontrollen av dubbletter (AK2.3) kommer i backlog-post #2.
+  // Skapar en budgetpost med status Planerad. Budgetpost kontrollerar fälten först (ValideringsFel);
+  // därefter nekas en andra budgetpost för samma kategori och månad, oavsett status (AK2.3, E-B4).
+  // Kategorier jämförs med normaliseraKategori (beställarbeslut 4). Inget läggs till om ett fel kastas.
   skapaBudgetpost(kategori, manad, belopp) {
     const post = new Budgetpost(kategori, manad, belopp);
+    const nyckel = normaliseraKategori(post.kategori);
+    const befintlig = this.#budgetposter.find(
+      (p) => normaliseraKategori(p.kategori) === nyckel && p.manad === post.manad
+    );
+    if (befintlig) {
+      throw new DubblettFel(
+        `Det finns redan en budgetpost för ${visningsnamn(befintlig.kategori)} ${befintlig.manad} med status ${befintlig.status}. Ändra beloppet på den befintliga budgetposten med Ändra budgetpost.`
+      );
+    }
     this.#budgetposter.push(post);
     return post;
   }
