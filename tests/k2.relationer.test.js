@@ -1,6 +1,6 @@
 // Tester för K2 Relationer och integritet (AK2.1, AK2.2, AK2.3), testfall T8–T11 i docs/testprotokoll.docx.
 // Beställarbeslut 4 (kategorier jämförs utan hänsyn till stora/små bokstäver, även i K2).
-// Kontonamn jämförs exakt (provisoriskt, design.md avsnitt 7).
+// Kontonamn jämförs utan hänsyn till stora/små bokstäver (beställarbeslut 6, design.md avsnitt 7).
 //
 // Modulerna importeras som namespace så att filen går att ladda även innan implementationen finns;
 // då blir varje test rött för sig i stället för att hela filen kraschar vid inläsning.
