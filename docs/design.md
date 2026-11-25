@@ -1,6 +1,6 @@
 **Design – Hushållsbudgeten (G11)**
 
-Version 1.5, 2026-11-25. Lab 2 del B, uppdaterad i Lab 3 sprint 1. Uppdateras när designen ändras (ÄB1).
+Version 1.6, 2026-11-25. Lab 2 del B, uppdaterad i Lab 3 sprint 1. Uppdateras när designen ändras (ÄB1).
 
 # 1. Språk, ramverk och kommandon
 
@@ -14,7 +14,7 @@ Version 1.5, 2026-11-25. Lab 2 del B, uppdaterad i Lab 3 sprint 1. Uppdateras n�
 |---|---|---|
 | src/model/ | Entiteter, tillstånd, regler, varianter (K1–K3):<br>Hushall, Konto (abstrakt), Lönekonto, Sparkonto, Kreditkort, Kontotyper (singleton), Budgetpost, Transaktion, Status och felklasserna ValideringsFel, DubblettFel, SaknasFel, RegelFel, StatusFel och FilformatFel samt kategori.js: normaliseraKategori(k) som ger jämförelsen (trim + gemener) och visningsnamn(k) som ger stor första bokstav visningsnamn(k) som ger stor första bokstav och formateraBelopp(belopp) som ger beloppet i hela kronor med vanligt mellanslag (U+0020) som tusentalsavgränsare, minustecknet − (U+2212) för negativa belopp och " kr" på slutet, t.ex. "−1 200 kr" (används i felmeddelandena E-K8 och E-T6), samt kontrollfunktionerna kontrolleraKategori (kategori.js), kontrolleraManad (budgetpost.js), kontrolleraKontonamn och kontrolleraIngaendeSaldo (konto.js), så att samma kontroll ger samma felmeddelande överallt |
 | | src/logic/ | manadssammanstallning.js: manadssammanstallning(hushall, manad) enligt avsnitt 5 (Algoritm K4) och kontraktet i avsnitt 4 | | model |
-| src/storage/ | fil.js: läser och skriver filen på disk med node:fs. sokvag(filnamn) ger sökvägen relativt projektets rotmapp (standard data/hushall.txt). lasFil(filnamn): Hushall läser filen i UTF-8 och anropar lasHushall. sparaFil(hushall, filnamn) anropar skrivHushall, skriver filen och skapar mappen data/ om den saknas.<br>filformat.js: lasHushall(text) och skrivHushall(hushall) enligt avsnitt 6 Filformat K5 (bara text, ingen disk).<br>server.js använder aldrig node:fs (K7 d) | model |
+| src/storage/ | fil.js: läser och skriver filen på disk med node:fs. sokvag(filnamn) ger sökvägen relativt projektets rotmapp (standard data/hushall.txt). Räkneexemplet ligger i data/hushallExempel.txt och skrivs aldrig av programmet. lasFil(filnamn): Hushall läser filen i UTF-8 och anropar lasHushall. sparaFil(hushall, filnamn) anropar skrivHushall, skriver filen och skapar mappen data/ om den saknas.<br>filformat.js: lasHushall(text) och skrivHushall(hushall) enligt avsnitt 6 Filformat K5 (bara text, ingen disk).<br>server.js använder aldrig node:fs (K7 d) | model |
 | src/ui/ | Server (controller, server.js): tar emot anropen i API-tabellen, anropar model, logic och storage och svarar med JSON. Ingen affärslogik (AK6.3). | model, logic, storage |
 | tests/ | Tester, en fil per krav (t.ex. k3.kontotyper.test.js, k5.filformat.test.js). Testfilerna namnges \*.test.js. | alla |
 | public/ | Webbvy (view: index.html, app.js, style.css): visar data och skickar inmatning till servern med fetch och JSON. Ingen affärslogik (AK6.3). | – (bara HTTP-anrop till servern) |
@@ -84,7 +84,7 @@ Alla anrop skickar och tar emot JSON. Vid fel svarar servern med statuskod 400 o
 | PUT       | /budgetposter                   | Hushall.hittaBudgetpost + nyttBelopp                                                                                                     | budgetposten                        |
 | GET       | /sammanstallning?manad=ÅÅÅÅ-MM  | logic: månadssammanställning                                                                                                             | lista med rader                     |
 | POST      | /spara                          | storage/fil.js: sparaFil(hushall, filnamn), som skriver data/hushall.txt om inget annat filnamn anges                                    | –                                   |
-| POST      | /oppna                          | storage/fil.js: lasFil(filnamn), som läser data/hushall.txt om inget annat filnamn anges; servern byter hushåll bara om inget fel kastas | –                                   |
+| POST      | /oppna                          | storage/fil.js: lasFil(filnamn), som läser data/hushall.txt; med { exempel: true } läses data/hushallExempel.txt. Serverns filnamn förblir data/hushall.txt, så Spara aldrig skriver över exemplet. Servern byter hushåll bara om inget fel kastas | –                                   |
 | POST      | /avsluta                        | stänger servern                                                                                                                          | –                                   |
 | GET       | /status                         | Serverns egna fält filnamn och osparat                                                                                                   | { filnamn, osparat }                |
 | GET       | /kategorier                     | Hushall.hamtaKategorier()                                                                                                                | lista med kategorinamn              |
@@ -243,7 +243,7 @@ SLUT
 - Kontonamn jämförs utan hänsyn till stora och små bokstäver vid inläsning (beslut 6): en transaktion med kontot "lön" hör till kontot "Lön". Två konton med samma namn i filen, även med olika skiftläge, ger FilformatFel: Rad {n}: kontot "{namn}" finns redan i filen.
 - Sparas data/hushall.txt
 
-- Repot levereras med räkneexemplet som data/hushall.txt.
+- Repot levereras med räkneexemplet som data/hushallExempel.txt (AK5.5), för provkörning. data/hushall.txt är kassörens egen fil; den skapas första gången kassören väljer Spara och committas inte.
 
 - Version 2 (fylls i vid ÄB1)
 
@@ -307,6 +307,7 @@ Kort;2026-11-30;-300;Hälsa;Apotek
 | 2026-11-25 | I andraKonto prövas kontotypens regel bara när det ingående saldot ändras, med ändringen som belopp. | Kontraktet angav inte beloppet; utan detta skulle ett namnbyte på ett Barnkonto (AK3.3) nekas. Godkänt av PO. | model/hushall.js |
 | 2026-11-25 | Kontonamn jämförs med samma normalisering som kategorier (trim + gemener) och visas som de skrevs när kontot skapades; samma jämförelse gäller när en fil öppnas. Ersätter det provisoriska beslutet om exakt jämförelse. | Beställarbeslut 6. | model/hushall.js, storage/filformat.js |
 | 2026-11-25 | Kontrakt för manadssammanstallning(hushall, manad) med radformatet från testprotokollet (T19). | Testerna för K4 kodas i #3 och behöver funktionens namn och returvärde; arbetsregel 3 kräver ett kontrakt före varje kodagentrunda. | logic/ |
+| 2026-11-25 | Räkneexemplet ligger i data/hushallExempel.txt för provkörning och skrivs aldrig av programmet; data/hushall.txt är kassörens fil. Ersätter beslutet 2026-11-22 om att repot levereras med exemplet som data/hushall.txt. | PO:s beslut: exemplet ska inte skrivas över när kassören sparar. design-extern.md 3.13–3.14 ändras i en designrunda före #7. | data/, storage/, ui/, public/, README |
 # När designen är klar: textversion för kodagenten
 
 | **Det här steget gör TPL åt er – men bara omvandlingen, inte innehållet.**<br>1. Klistra in eller ladda upp det här dokumentet hos TPL med uppdraget: ”Här är vår design. Gör om den till markdown ordagrant: samma rubriker, tabeller och formuleringar. Lägg inte till, ta inte bort och förbättra ingenting. Skriv [bild] där klassdiagrammets bild står. Svara bara med markdown-texten.”<br>2. Spara svaret som docs/design.md (ny fil i VS Code, klistra in, spara).<br>3. Läs textversionen mot det här dokumentet. Stämmer något inte: rätta i design.md eller be om en ny omvandling.<br>4. Committa båda filerna och notera omvandlingen i AI-loggen.<br>5. När designen ändras: ändra först här i Word-filen och gör sedan om steg 1–4. |
