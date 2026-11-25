@@ -13,6 +13,6 @@ Klistra in detta efter kursens startprompt till TPL (en per labb, se Canvas) nä
   4. Kategorier jämförs utan hänsyn till stora och små bokstäver (även i K2 och sorteringen); utskriften dokumenteras.
   5. Webbgränssnitt på localhost är tillåtet; programmet ska inte behöva internet och startar med ett kommando (K7 b).
   6. Kontonamn jämförs utan hänsyn till stora och små bokstäver, som kategorier; namnet visas som det skrevs. Gäller även när en fil öppnas.
-- **Status:** Lab 2 inlämnad 23 nov. Sprint 1 pågår (23–30 nov), PO-ansvarig: medlem A. Kodagent: Claude Code i VS Code; TPL och designer-AI: Claude desktop. Testprotokoll T1–T35 (#14: T29–T31, T35; #3: T12–T28, T32–T34). Klart: #1, #2; pågår: #14; kvar: #3–#11 Kända avvikelser: –.
+- **Status:** Lab 2 inlämnad 23 nov. Sprint 1 pågår (23–30 nov), PO-ansvarig: medlem A. Kodagent: Claude Code i VS Code; TPL och designer-AI: Claude desktop. Testprotokoll T1–T35 (#14: T29–T31, T35; #3: T12–T28, T32–T34). Klart: #1, #2, #14; pågår: #3; kvar: #4–#11. Kända avvikelser: –.
 - **Beslut i sprint 1:** grunden i K1 testas med testklassen TestKonto i varje testfil, så att K1 och K2 inte beror på K3; T12–T18 förblir röda tills #4. Tom rad i filen hoppas över (design.md avsnitt 6). Belopp i felmeddelanden formateras av formateraBelopp i model/kategori.js (design.md 1.3).
 - **Regler:** en backlog-post per uppdrag; tester före kod för K4/K5/ÄB1; uppdrag till kodagenten ska innehålla AK-nummer, berörda filer och vad som inte får ändras.
