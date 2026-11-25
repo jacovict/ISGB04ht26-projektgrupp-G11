@@ -301,7 +301,6 @@ Kort;2026-11-30;-300;Hälsa;Apotek
 | 2026-11-22 | Repot levereras med räkneexemplet som data/hushall.txt, och kassören öppnar det med Öppna.                                                                    | PO:s beslut i designrunda 2 (AK5.5) med den fasta filen.                                                                                        | data/, README                                                                                                               |
 | 2026-11-22 | Servern levererar andel som text med decimalkomma ("110,0 %" eller "–") och avvikelse som heltal. Webbvy lägger bara till plustecken och tusentalsavgränsare. | PO:s beslut i designrunda 2. Det ska vara tydligt vem som formaterar, så att Webbvy inte räknar något (AK6.3) och resultatet stämmer med AK4.1. | logic/, public/                                                                                                             |
 | 2026-11-25 | Tom rad i filen hoppas över vid inläsning men räknas i radnumret. | Granskning av testprotokollet: radnumren i felmeddelandena (AK5.2–5.4) måste vara entydiga. | storage/filformat.js |
-
 | 2026-11-25 | formateraBelopp(belopp) i model/kategori.js formaterar belopp i felmeddelanden enligt design-extern.md avsnitt 1. | Felmeddelandena E-K8 och E-T6 skapas i model/ och innehåller belopp; design.md angav inte var formateringen ligger. Webbvy får inte räkna (AK6.3). | model/kategori.js |
 
 # När designen är klar: textversion för kodagenten
