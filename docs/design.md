@@ -1,6 +1,6 @@
 **Design – Hushållsbudgeten (G11)**
 
-Version 1.2, 2026-11-22. Lab 2 del B. Uppdateras när designen ändras (ÄB1).
+Version 1.3, 2026-11-25. Lab 2 del B, uppdaterad i Lab 3 sprint 1. Uppdateras när designen ändras (ÄB1).
 
 # 1. Språk, ramverk och kommandon
 
@@ -12,7 +12,7 @@ Version 1.2, 2026-11-22. Lab 2 del B. Uppdateras när designen ändras (ÄB1).
 
 | **Modul/paket** | **Innehåll** | **Får importera** |
 |---|---|---|
-| src/model/ | Entiteter, tillstånd, regler, varianter (K1–K3):<br>Hushall, Konto (abstrakt), Lönekonto, Sparkonto, Kreditkort, Kontotyper (singleton), Budgetpost, Transaktion, Status och felklasserna ValideringsFel, DubblettFel, SaknasFel, RegelFel, StatusFel och FilformatFel samt kategori.js: normaliseraKategori(k) som ger jämförelsen (trim + gemener) och visningsnamn(k) som ger stor första bokstav | – |
+| src/model/ | Entiteter, tillstånd, regler, varianter (K1–K3):<br>Hushall, Konto (abstrakt), Lönekonto, Sparkonto, Kreditkort, Kontotyper (singleton), Budgetpost, Transaktion, Status och felklasserna ValideringsFel, DubblettFel, SaknasFel, RegelFel, StatusFel och FilformatFel samt kategori.js: normaliseraKategori(k) som ger jämförelsen (trim + gemener) och visningsnamn(k) som ger stor första bokstav visningsnamn(k) som ger stor första bokstav och formateraBelopp(belopp) som ger beloppet i hela kronor med vanligt mellanslag (U+0020) som tusentalsavgränsare, minustecknet − (U+2212) för negativa belopp och " kr" på slutet, t.ex. "−1 200 kr" (används i felmeddelandena E-K8 och E-T6) |
 | src/logic/ | Månadssammanställning, Algoritm K4 | model |
 | src/storage/ | fil.js: läser och skriver filen på disk med node:fs. sokvag(filnamn) ger sökvägen relativt projektets rotmapp (standard data/hushall.txt). lasFil(filnamn): Hushall läser filen i UTF-8 och anropar lasHushall. sparaFil(hushall, filnamn) anropar skrivHushall, skriver filen och skapar mappen data/ om den saknas.<br>filformat.js: lasHushall(text) och skrivHushall(hushall) enligt avsnitt 6 Filformat K5 (bara text, ingen disk).<br>server.js använder aldrig node:fs (K7 d) | model |
 | src/ui/ | Server (controller, server.js): tar emot anropen i API-tabellen, anropar model, logic och storage och svarar med JSON. Ingen affärslogik (AK6.3). | model, logic, storage |
@@ -300,6 +300,9 @@ Kort;2026-11-30;-300;Hälsa;Apotek
 | 2026-11-22 | Kontrakt för lasFil och sparaFil: saknad fil ger SaknasFel; trasig fil och fil som inte kan skrivas ger FilformatFel. Data i minnet är orörd.                 | PO:s beslut i designrunda 2. Design.md hade inga kontrakt för fil.js, och inga nya felklasser behövs.                                           | storage/fil.js, src/ui/server.js                                                                                            |
 | 2026-11-22 | Repot levereras med räkneexemplet som data/hushall.txt, och kassören öppnar det med Öppna.                                                                    | PO:s beslut i designrunda 2 (AK5.5) med den fasta filen.                                                                                        | data/, README                                                                                                               |
 | 2026-11-22 | Servern levererar andel som text med decimalkomma ("110,0 %" eller "–") och avvikelse som heltal. Webbvy lägger bara till plustecken och tusentalsavgränsare. | PO:s beslut i designrunda 2. Det ska vara tydligt vem som formaterar, så att Webbvy inte räknar något (AK6.3) och resultatet stämmer med AK4.1. | logic/, public/                                                                                                             |
+| 2026-11-25 | Tom rad i filen hoppas över vid inläsning men räknas i radnumret. | Granskning av testprotokollet: radnumren i felmeddelandena (AK5.2–5.4) måste vara entydiga. | storage/filformat.js |
+
+| 2026-11-25 | formateraBelopp(belopp) i model/kategori.js formaterar belopp i felmeddelanden enligt design-extern.md avsnitt 1. | Felmeddelandena E-K8 och E-T6 skapas i model/ och innehåller belopp; design.md angav inte var formateringen ligger. Webbvy får inte räkna (AK6.3). | model/kategori.js |
 
 # När designen är klar: textversion för kodagenten
 
