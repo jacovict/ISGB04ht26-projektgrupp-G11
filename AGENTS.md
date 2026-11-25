@@ -15,7 +15,7 @@ få en månadssammanställning mot budgeten uträknad enligt föreningens regler
   - `src/ui/` – `server.js` (controller): tar emot anropen i API-tabellen och svarar med JSON.
   - `public/` – Webbvy (view): `index.html`, `app.js`, `style.css`.
   - `tests/` – tester, en fil per krav, namngivna `*.test.js`.
-  - `data/` – programmets fasta fil `data/hushall.txt`.
+  - `data/` – programmets fasta fil `data/hushall.txt` (skapas vid Spara, committas inte) och räkneexemplet `data/hushallExempel.txt` (AK5.5).
 - Varje modul får bara importera det som står i modulindelningen i `docs/design.md`.
 - Gränssnittet (`src/ui/` och `public/`) får aldrig innehålla affärslogik. All validering sker i `src/model/` (AK6.3). Webbvy räknar inget; den visar det servern levererar.
 - `server.js` använder aldrig `node:fs`. All filhantering sker i `src/storage/fil.js` (K7 d).
@@ -35,7 +35,7 @@ få en månadssammanställning mot budgeten uträknad enligt föreningens regler
 - Arbeta med en backlog-post (issue) i taget. Ändra bara filer som posten kräver.
 - Testfallen för K4, K5 och ÄB1 ska vara committade innan implementationen (K7 a). Skriv inte implementation för dem förrän produktägaren säger att testerna finns.
 - Skriv eller uppdatera tester för det du ändrar. Tester ska testa krav (AK-nummer i testnamnet), inte spegla koden.
-- `data/hushall.txt` är räkneexemplets exempelfil (AK5.5). Tester får aldrig skriva till den; de använder ett eget filnamn.
+- `data/hushallExempel.txt` är räkneexemplets exempelfil (AK5.5). Varken programmet eller testerna skriver till den. Tester skriver inte heller till `data/hushall.txt`; de använder ett eget filnamn.
 - Inga nya beroenden utan att fråga. Ingen serialisering av hela objektgrafen med JSON/XML/pickle i filformatet (K5).
 - Kommentera koden på svenska eller engelska, konsekvent.
 - Hittar du en tvetydighet i kravet: stanna och fråga, gissa inte.
