@@ -12,6 +12,6 @@ Klistra in detta efter kursens startprompt till TPL (en per labb, se Canvas) nä
   3. En transaktion ändras på plats; reglerna i K1 och K3 gäller även vid ändring, också när månadens budgetpost är Avslutad.
   4. Kategorier jämförs utan hänsyn till stora och små bokstäver (även i K2 och sorteringen); utskriften dokumenteras.
   5. Webbgränssnitt på localhost är tillåtet; programmet ska inte behöva internet och startar med ett kommando (K7 b).
-- **Status:** Lab 2 inlämnad 23 nov. Sprint 1 pågår (23–30 nov), PO-ansvarig: medlem A. Kodagent: Claude Code i VS Code; TPL och designer-AI: Claude desktop. Testprotokoll T1–T28 klart (#1: T1–T7, #2: T8–T11, #3: T12–T28). Klart: –; pågår: #1; kvar: #2–#11. Kända avvikelser: –.
+- **Status:** Lab 2 inlämnad 23 nov. Sprint 1 pågår (23–30 nov), PO-ansvarig: medlem A. Kodagent: Claude Code i VS Code; TPL och designer-AI: Claude desktop. Testprotokoll T1–T28 klart (#1: T1–T7, #2: T8–T11, #3: T12–T28). Klart: #1; pågår: #2; kvar: #3–#11. Kända avvikelser: –.
 - **Beslut i sprint 1:** grunden i K1 testas med testklassen TestKonto i varje testfil, så att K1 och K2 inte beror på K3; T12–T18 förblir röda tills #4. Tom rad i filen hoppas över (design.md avsnitt 6). Belopp i felmeddelanden formateras av formateraBelopp i model/kategori.js (design.md 1.3).
 - **Regler:** en backlog-post per uppdrag; tester före kod för K4/K5/ÄB1; uppdrag till kodagenten ska innehålla AK-nummer, berörda filer och vad som inte får ändras.
