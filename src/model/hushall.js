@@ -10,10 +10,12 @@ export class Hushall {
   #konton = [];
   #budgetposter = [];
 
-  // Lägger till kontot om inget annat konto har samma namn (K1, E-K2).
+  // Lägger till kontot om inget annat konto har samma namn utan hänsyn till stora och små
+  // bokstäver (K1, beställarbeslut 6, E-K2). Namnet lagras som det skrevs.
   laggTillKonto(k) {
-    if (this.#konton.some((konto) => konto.namn === k.namn)) {
-      throw new DubblettFel(`Det finns redan ett konto som heter "${k.namn}". Välj ett annat namn.`);
+    const befintligt = this.#sokKonto(k.namn);
+    if (befintligt) {
+      throw this.#dubblettFel(befintligt);
     }
     this.#konton.push(k);
   }
@@ -35,9 +37,10 @@ export class Hushall {
     return [...this.#konton];
   }
 
-  // Returnerar kontot med namnet. Annars SaknasFel (E-K6).
+  // Returnerar kontot med namnet, utan hänsyn till stora och små bokstäver (beställarbeslut 6).
+  // Annars SaknasFel (E-K6).
   hittaKonto(namn) {
-    const konto = this.#konton.find((k) => k.namn === namn);
+    const konto = this.#sokKonto(namn);
     if (!konto) {
       throw new SaknasFel(
         `Kontot "${namn ?? ''}" finns inte. Välj ett av förslagen, eller lägg först till kontot med Lägg till konto.`
@@ -50,8 +53,11 @@ export class Hushall {
   andraKonto(namn, nyttNamn, nyttIngaendeSaldo) {
     const konto = this.hittaKonto(namn);
     const namnet = kontrolleraKontonamn(nyttNamn);
-    if (this.#konton.some((k) => k !== konto && k.namn === namnet)) {
-      throw new DubblettFel(`Det finns redan ett konto som heter "${namnet}". Välj ett annat namn.`);
+    // Bara andra konton räknas som dubblett; byte av skiftläge på kontots eget namn godtas (beslut 6).
+    const nyckel = normaliseraKategori(namnet);
+    const annat = this.#konton.find((k) => k !== konto && normaliseraKategori(k.namn) === nyckel);
+    if (annat) {
+      throw this.#dubblettFel(annat);
     }
     const saldot = kontrolleraIngaendeSaldo(nyttIngaendeSaldo);
 
@@ -133,6 +139,18 @@ export class Hushall {
       );
     }
     return post;
+  }
+
+  // Kontot vars namn är lika med namn utan hänsyn till stora och små bokstäver, samma
+  // normalisering som för kategorier (beställarbeslut 6). Annars undefined.
+  #sokKonto(namn) {
+    const nyckel = normaliseraKategori(namn ?? '');
+    return this.#konton.find((k) => normaliseraKategori(k.namn) === nyckel);
+  }
+
+  // E-K2 med det befintliga kontots namn.
+  #dubblettFel(befintligt) {
+    return new DubblettFel(`Det finns redan ett konto som heter "${befintligt.namn}". Välj ett annat namn.`);
   }
 
   // E-T6: kontotypen tillåter inte saldot som transaktionen skulle ge.
