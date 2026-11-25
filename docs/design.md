@@ -238,6 +238,7 @@ SLUT
 - Felfall (AK5.2–5.4) och hur radnummer rapporteras: Till exempel ger en transaktion med ett konto som saknas Rad 14: kontot "Lönn" finns inte i filen (AK5.2), ett belopp som inte är ett heltal Rad 9: beloppet "tusen" är inte ett heltal (AK5.3) och en okänd status Rad 7: statusen "Klar" finns inte (Planerad, Aktiv, Avslutad) (AK5.4).
 
 - Motivering av formatvalet: Formatet är lättläst och går enkelt att dela upp i JavaScript utan externa bibliotek.
+- Tom rad hoppas över
 
 - Sparas data/hushall.txt
 
