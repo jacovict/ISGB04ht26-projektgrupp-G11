@@ -4,7 +4,7 @@ Version 1.2, ⟨2026-11-22⟩. Lab 2 del C. Framtagen av designer-AI (Claude) p�
 
 > **PO:s svar på designerns frågor F1–F7 (2026-11-22) är inarbetade:** samma fil används alltid (F1). Servern håller reda på osparade ändringar (F2). Kontotypernas regler visas bara i felmeddelanden (F3). Servern ger kategorierna (F4). Belopp skrivs med bara siffror och ett eventuellt plus- eller minustecken, utan mellanslag (F5). Menyn är den fasta sidomenyn, och kassören stannar i vyn efter ett fel (F6). Ett nytt ingående saldo som ger ett otillåtet saldo nekas (F7).
 >
-> Stämmer med design.md version 1.1.
+> Stämmer med design.md version 1.3.
 
 ## 1. Gränssnittstyp och målgrupp
 
