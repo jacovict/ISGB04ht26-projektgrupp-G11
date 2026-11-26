@@ -1,6 +1,6 @@
 **Design – Hushållsbudgeten (G11)**
 
-Version 1.6, 2026-11-25. Lab 2 del B, uppdaterad i Lab 3 sprint 1. Uppdateras när designen ändras (ÄB1).
+Version 1.7, 2026-11-26. Lab 2 del B, uppdaterad i Lab 3 sprint 1. Uppdateras när designen ändras (ÄB1).
 
 # 1. Språk, ramverk och kommandon
 
@@ -14,7 +14,7 @@ Version 1.6, 2026-11-25. Lab 2 del B, uppdaterad i Lab 3 sprint 1. Uppdateras n�
 |---|---|---|
 | src/model/ | Entiteter, tillstånd, regler, varianter (K1–K3):<br>Hushall, Konto (abstrakt), Lönekonto, Sparkonto, Kreditkort, Kontotyper (singleton), Budgetpost, Transaktion, Status och felklasserna ValideringsFel, DubblettFel, SaknasFel, RegelFel, StatusFel och FilformatFel samt kategori.js: normaliseraKategori(k) som ger jämförelsen (trim + gemener) och visningsnamn(k) som ger stor första bokstav visningsnamn(k) som ger stor första bokstav och formateraBelopp(belopp) som ger beloppet i hela kronor med vanligt mellanslag (U+0020) som tusentalsavgränsare, minustecknet − (U+2212) för negativa belopp och " kr" på slutet, t.ex. "−1 200 kr" (används i felmeddelandena E-K8 och E-T6), samt kontrollfunktionerna kontrolleraKategori (kategori.js), kontrolleraManad (budgetpost.js), kontrolleraKontonamn och kontrolleraIngaendeSaldo (konto.js), så att samma kontroll ger samma felmeddelande överallt |
 | | src/logic/ | manadssammanstallning.js: manadssammanstallning(hushall, manad) enligt avsnitt 5 (Algoritm K4) och kontraktet i avsnitt 4 | | model |
-| src/storage/ | fil.js: läser och skriver filen på disk med node:fs. sokvag(filnamn) ger sökvägen relativt projektets rotmapp (standard data/hushall.txt). Räkneexemplet ligger i data/hushallExempel.txt och skrivs aldrig av programmet. lasFil(filnamn): Hushall läser filen i UTF-8 och anropar lasHushall. sparaFil(hushall, filnamn) anropar skrivHushall, skriver filen och skapar mappen data/ om den saknas.<br>filformat.js: lasHushall(text) och skrivHushall(hushall) enligt avsnitt 6 Filformat K5 (bara text, ingen disk).<br>server.js använder aldrig node:fs (K7 d) | model |
+| src/storage/ | fil.js: läser och skriver filen på disk med node:fs. sokvag(filnamn) ger sökvägen relativt projektets rotmapp (standard data/hushall.txt). Räkneexemplet ligger i data/hushallExempel.txt och skrivs aldrig av programmet. lasFil(filnamn): Hushall läser filen i UTF-8 och anropar lasHushall. sparaFil(hushall, filnamn) anropar skrivHushall, skriver filen och skapar mappen data/ om den saknas. lasWebbfil(namn) läser en av webbsidans filer i public/ åt Server och nekar sökvägar utanför public/.<br>filformat.js: lasHushall(text) och skrivHushall(hushall) enligt avsnitt 6 Filformat K5 (bara text, ingen disk).<br>server.js använder aldrig node:fs (K7 d) | model |
 | src/ui/ | Server (controller, server.js): tar emot anropen i API-tabellen, anropar model, logic och storage och svarar med JSON. Ingen affärslogik (AK6.3). | model, logic, storage |
 | tests/ | Tester, en fil per krav (t.ex. k3.kontotyper.test.js, k5.filformat.test.js). Testfilerna namnges \*.test.js. | alla |
 | public/ | Webbvy (view: index.html, app.js, style.css): visar data och skickar inmatning till servern med fetch och JSON. Ingen affärslogik (AK6.3). | – (bara HTTP-anrop till servern) |
@@ -88,6 +88,38 @@ Alla anrop skickar och tar emot JSON. Vid fel svarar servern med statuskod 400 o
 | POST      | /avsluta                        | stänger servern                                                                                                                          | –                                   |
 | GET       | /status                         | Serverns egna fält filnamn och osparat                                                                                                   | { filnamn, osparat }                |
 | GET       | /kategorier                     | Hushall.hamtaKategorier()                                                                                                                | lista med kategorinamn              |
+| GET       | /, /app.js, /style.css          | storage/fil.js: lasWebbfil(namn) (/ ger index.html) | filens innehåll med rätt innehållstyp (text/html, text/javascript, text/css); okänd fil ger status 404 |
+
+**Fält i anropen (JSON):**
+
+Kontonamnet i adressen kodas med encodeURIComponent (t.ex. /konton/L%C3%B6n). Belopp, ingående saldo och transaktionsnummer får skickas som tal eller som text; text tolkas med tolkaHeltal (se avsnitt 7). Alla svar vid fel har formen nedan.
+
+| **Metod** | **Adress** | **Skickar** | **Svarar med** |
+|---|---|---|---|
+| POST | /konton | { namn: String, typ: String, ingaendeSaldo: Number \| String } | { namn, typ, ingaendeSaldo, saldo } |
+| GET | /konton | – | [ { namn, typ, saldo } ] |
+| GET | /konton/:namn | – | { namn, typ, ingaendeSaldo, saldo, transaktioner: [ { nr, datum, kategori, belopp, beskrivning } ] } |
+| POST | /konton/:namn/transaktioner | { datum: "ÅÅÅÅ-MM-DD", kategori: String, belopp: Number \| String, beskrivning: String } | { nr, datum, kategori, belopp, beskrivning } |
+| PUT | /konton/:namn/transaktioner/:nr | { datum, kategori, belopp: Number \| String, beskrivning } (nr i adressen) | { nr, datum, kategori, belopp, beskrivning } |
+| GET | /kontotyper | – | [ String ] (i registrets ordning) |
+| PUT | /konton/:namn | { nyttNamn: String, nyttIngaendeSaldo: Number \| String } | { namn, typ, ingaendeSaldo, saldo } |
+| DELETE | /konton/:namn | – | { namn } |
+| POST | /konton/:namn/ranta | { manad: "ÅÅÅÅ-MM" } | { transaktion: { nr, datum, kategori, belopp, beskrivning } \| null } |
+| GET | /budgetposter | – | [ { kategori, manad, belopp, status } ] |
+| POST | /budgetposter | { kategori: String, manad: "ÅÅÅÅ-MM", belopp: Number \| String } | { kategori, manad, belopp, status } |
+| POST | /budgetposter/aktivera | { kategori, manad } | { kategori, manad, belopp, status } |
+| POST | /budgetposter/avsluta | { kategori, manad } | { kategori, manad, belopp, status } |
+| PUT | /budgetposter | { kategori, manad, belopp: Number \| String } | { kategori, manad, belopp, status } |
+| GET | /sammanstallning?manad=ÅÅÅÅ-MM | – | [ { kategori: String, budget: Number \| "–", utfall: Number, avvikelse: Number, andel: String } ] (andel t.ex. "110,0 %" eller "–"; "–" är U+2013) |
+| GET | /kategorier | – | [ String ] |
+| GET | /status | – | { filnamn: String, osparat: Boolean } |
+| POST | /spara | {} | { filnamn } |
+| POST | /oppna | {} eller { exempel: true } | { filnamn } (den fil som lästes; serverns filnamn för Spara förblir data/hushall.txt) |
+| POST | /avsluta | {} | { }, varefter servern stänger |
+| Alla | vid fel | – | Status 400 och { fel: felklassens namn, t.ex. "ValideringsFel" eller "SaknasFel", meddelande: String } |
+| Alla | oväntat fel | – | Status 500 och { fel: "OväntatFel", meddelande: "Något gick fel i programmet. Data i programmet är oförändrad. Försök igen." }; servern fortsätter att svara |
+
+Kategorier i alla svar ges med visningsnamn. Belopp och saldon ges som heltal; Webbvy formaterar dem. status ges som Planerad, Aktiv eller Avslutad. GET /kategorier ger alla kategorier i transaktioner och budgetposter, en gång var, i svensk bokstavsordning. osparat blir sant efter varje lyckad ändring och falskt efter lyckad Spara eller Öppna.
 
 # 4. Modulkontrakt (minst fem)
 
@@ -110,6 +142,8 @@ Alla anrop skickar och tar emot JSON. Vid fel svarar servern med statuskod 400 o
 | fil.lasFil(filnamn) | filnamn anges relativt projektets rotmapp; standard är data/hushall.txt. | returnerar ett nytt Hushall enligt filformat.lasHushall (AK5.1). | Vid regelbrott: filen finns inte → kastar SaknasFel. Filens innehåll är trasigt → FilformatFel från lasHushall, med rad och orsak (AK5.2–5.4). I båda fallen är data i minnet orörd; servern byter hushåll bara om inget fel kastas (K5). |
 | fil.sparaFil(hushall, filnamn) | hushall är ett giltigt Hushall; filnamn som ovan. | mappen data/ skapas om den saknas; filen innehåller skrivHushall(hushall); lasFil läser tillbaka samma data (AK5.1). | filen kan inte skrivas → kastar FilformatFel; hushållet i minnet är oförändrat.<br>Felmeddelandenas text står ordagrant i design-extern.md 4.4 (E-F2, E-F3, E-F4). |
 | logic.manadssammanstallning(hushall, manad) | hushall är ett giltigt Hushall; manad har formen ÅÅÅÅ-MM | Returnerar en ny lista med rader { kategori, budget, utfall, avvikelse, andel } enligt avsnitt 5, sorterad enligt steg 4. kategori = visningsnamn; budget = heltal eller "–" (U+2013); utfall och avvikelse = heltal; andel = text med en decimal, decimalkomma och " %" (U+0020 före %), eller "–". Hushållet ändras inte, och samma indata ger alltid samma lista (K4). En månad utan transaktioner och budgetposter ger en tom lista (AK4.2). | Kastar ValideringsFel (E-M1); hushållet oförändrat |
+| Server.start(port) | port är ett heltal ≥ 0; 0 betyder att operativsystemet väljer en ledig port | Returnerar en Promise som löses med serverobjektet när servern lyssnar; server.address().port ger porten och server.close() stänger servern. Varje start ger ett nytt, tomt Hushall; servern läser inte data/hushall.txt vid start (kassören öppnar filen med Öppna). server.js startar sig själv på port 3000 bara när filen körs direkt (import.meta.url === pathToFileURL(process.argv[1]).href), inte när den importeras av tester. | Promisen avvisas med felet om porten inte kan användas |
+| fil.lasWebbfil(namn) | namn är ett filnamn i public/, t.ex. index.html | Returnerar filens innehåll | Namnet pekar utanför public/ eller filen finns inte → SaknasFel; inget läses utanför public/ |
 
 # 
 
@@ -315,6 +349,9 @@ Kort;2026-11-30;-300;Hälsa;Apotek
 | 2026-11-26 | Räntetransaktionen får beskrivningen "Ränta ÅÅÅÅ-MM". En Ränta-transaktion som kassören registrerat själv räknas också, så beräkna ränta ger då E-R1. | Kontraktet angav ingen beskrivning; kontraktet och design-extern 3.11: räntan bokförs en gång per konto och månad. Godkänt av PO. | model/konto.js, model/hushall.js |
 | 2026-11-26 | Andelen avrundas till närmaste tiondel (exakt hälften bort från noll); en negativ andel skrivs med bindestreck (-5,0 %). | Kontraktet angav varken avrundning eller tecken för negativ andel. Bindestreck fungerar i CSV-export (K9). Godkänt av PO. | logic/ |
 | 2026-11-26 | Filformatet: `\;` och `\\` för specialtecken i textfält; fasta felorsaker för filens struktur och modellens felmeddelande efter "Rad {n}: " för övriga fel; `\n` och `\r\n` godtas vid inläsning, `\n` skrivs. | Avsnitt 6 angav inte detta; utan det går filen sönder vid semikolon i en beskrivning och vid CRLF-radslut på Windows (* text=auto). PO:s beslut inför #6. | storage/filformat.js, README |
+| 2026-11-26 | Belopp, ingående saldo och transaktionsnummer får komma som tal eller som text. Text tolkas av tolkaHeltal(varde) i src/model/kategori.js: valfritt minustecken följt av siffror; allt annat ("12 00", "12.5", "500kr", "") ger ValideringsFel med E-T2 (transaktionsbelopp), E-B3 (budgetbelopp), E-K4 (ingående saldo) eller E-T7 (transaktionsnummer). | Värden från formulär och adresser kommer som text; "12 00" och "500kr" får inte tyst bli 1200 eller 500. En gemensam funktion ger samma regel överallt. | model/kategori.js, Hushall, Kontotyper, Budgetpost |
+| 2026-11-26 | Server.start(port) returnerar en Promise med serverobjektet och ger varje start ett nytt, tomt Hushall; server.js startar sig själv bara när filen körs direkt. Fälten i anropen står i tabellen Fält i anropen i avsnitt 3. | Testerna för AK6.2 startar servern på port 0 och stänger den efteråt, utan att påverka varandra eller data/hushall.txt. | ui/server.js, tests/k6.server.test.js |
+| 2026-11-26 | Webbsidans filer läses av fil.lasWebbfil(namn), som bara läser i public/. Fel som inte är felklasserna ger status 500 och { fel: "OväntatFel", meddelande } och servern fortsätter att svara. | server.js får inte använda node:fs (K7 d), men måste skicka public/ till webbläsaren. Oväntade fel (t.ex. en fil som inte går att läsa, känd begränsning från #6) saknade svar. PO:s beslut inför #7. | storage/fil.js, ui/server.js |
 # När designen är klar: textversion för kodagenten
 
 | **Det här steget gör TPL åt er – men bara omvandlingen, inte innehållet.**<br>1. Klistra in eller ladda upp det här dokumentet hos TPL med uppdraget: ”Här är vår design. Gör om den till markdown ordagrant: samma rubriker, tabeller och formuleringar. Lägg inte till, ta inte bort och förbättra ingenting. Skriv [bild] där klassdiagrammets bild står. Svara bara med markdown-texten.”<br>2. Spara svaret som docs/design.md (ny fil i VS Code, klistra in, spara).<br>3. Läs textversionen mot det här dokumentet. Stämmer något inte: rätta i design.md eller be om en ny omvandling.<br>4. Committa båda filerna och notera omvandlingen i AI-loggen.<br>5. När designen ändras: ändra först här i Word-filen och gör sedan om steg 1–4. |
