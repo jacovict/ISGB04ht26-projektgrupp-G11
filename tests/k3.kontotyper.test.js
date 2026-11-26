@@ -144,3 +144,19 @@ test('AK3.1 T18: ingen ränta på lönekonto', () => {
   assert.equal(hushall.beraknaRanta('Lön', '2026-11'), null);
   assert.equal(hushall.hittaKonto('Lön').hamtaTransaktioner().length, 4);
 });
+
+test('K3 T36: ränta kan inte bokföras två gånger samma månad', () => {
+  const hushall = byggRakneexemplet();
+
+  const ranta = hushall.beraknaRanta('Spar', '2026-11');
+  assert.ok(ranta, 'beraknaRanta ska returnera en transaktion');
+  assert.equal(ranta.belopp, 100);
+
+  forvantaFel(() => hushall.beraknaRanta('Spar', '2026-11'), 'DubblettFel');
+
+  const spar = hushall.hittaKonto('Spar');
+  const transaktioner = spar.hamtaTransaktioner();
+  assert.equal(transaktioner.length, 2);
+  assert.equal(transaktioner.filter((t) => t.kategori === 'Ränta').length, 1);
+  assert.equal(spar.saldo(), 23100);
+});
