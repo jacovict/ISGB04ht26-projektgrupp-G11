@@ -1,8 +1,8 @@
 # Extern designspecifikation – Hushållsbudgeten (G11)
 
-Version 1.2, ⟨2026-11-22⟩. Lab 2 del C. Framtagen av designer-AI (Claude) på uppdrag från TPL; granskad och godkänd av produktägaren ⟨2026-11-22, PO⟩. Underlag för K6 (AK6.4).
+Version 1.3, ⟨2026-11-26⟩. Lab 2 del C, uppdaterad i Lab 3 (designrunda 3). Framtagen av designer-AI (Claude) på uppdrag från TPL; granskad och godkänd av produktägaren ⟨2026-11-26, PO⟩. Underlag för K6 (AK6.4).
 
-> **PO:s svar på designerns frågor F1–F7 (2026-11-22) är inarbetade:** samma fil används alltid (F1). Servern håller reda på osparade ändringar (F2). Kontotypernas regler visas bara i felmeddelanden (F3). Servern ger kategorierna (F4). Belopp skrivs med bara siffror och ett eventuellt plus- eller minustecken, utan mellanslag (F5). Menyn är den fasta sidomenyn, och kassören stannar i vyn efter ett fel (F6). Ett nytt ingående saldo som ger ett otillåtet saldo nekas (F7).
+> **PO:s svar på designerns frågor F1–F7 (2026-11-22) är inarbetade:** samma fil används alltid (utom räkneexemplet, se 3.14 och avsnitt 7) (F1). Servern håller reda på osparade ändringar (F2). Kontotypernas regler visas bara i felmeddelanden (F3). Servern ger kategorierna (F4). Belopp skrivs med bara siffror och ett eventuellt plus- eller minustecken, utan mellanslag (F5). Menyn är den fasta sidomenyn, och kassören stannar i vyn efter ett fel (F6). Ett nytt ingående saldo som ger ett otillåtet saldo nekas (F7).
 >
 > Stämmer med design.md version 1.7.
 
@@ -102,7 +102,7 @@ Tabellen har en rad per operation. Varje vy är skissad i text i 3.0–3.15 neda
 | Beräkna ränta | 3.11 *Beräkna ränta*: välj konto och månad | Konto, månad | Kvittens med räntetransaktionen, eller besked att räntan blev 0 kr | E-K6, E-M1, E-R1 |
 | Visa månadssammanställning | 3.12 *Månadssammanställning*: välj månad, tabell + förklaring | Månad | Rader: plac, kategori, budget, utfall, avvikelse, andel (i serverns ordning) | E-M1 |
 | Spara | 3.13 *Spara*: knapp, programmets fil visas | – (alltid samma fil) | Kvittens; "Osparade ändringar" försvinner ur statusraden | E-F4 |
-| Öppna | 3.14 *Öppna*: knapp, bekräftelse om osparat | – (alltid samma fil) | Kvittens; startvyn visar filens konton | E-F2, E-F3 (AK5.2–5.4) |
+| Öppna | 3.14 *Öppna*: två knappar, [Öppna] (programmets fil data/hushall.txt) och [Öppna räkneexemplet] (data/hushallExempel.txt), bekräftelse om osparat | – (två val: [Öppna] eller [Öppna räkneexemplet]; inget filnamn) | Kvittens; startvyn visar filens konton | E-F2, E-F3 (AK5.2–5.4) |
 | Avsluta | 3.15 *Avsluta*: bekräftelse om osparat, slutvy | – | Slutvy | E-S1 |
 
 ### 3.0 Startvy – Konton
@@ -376,6 +376,7 @@ Spara alla konton, transaktioner och budgetposter till en fil.
   [Spara]  [Avbryt]
 ```
 - Filen är alltid densamma, data/hushall.txt (design.md avsnitt 2 och 6); namnet visas från `GET /status`. Kassören anger inget filnamn.
+- Spara skriver alltid till data/hushall.txt, även när räkneexemplet har öppnats med [Öppna räkneexemplet]. Räkneexemplet data/hushallExempel.txt skrivs aldrig av programmet (design.md avsnitt 3 och 7). Finns data/hushall.txt inte än skapas den vid Spara.
 
 ### 3.14 Öppna
 
@@ -386,11 +387,14 @@ programmet nu ersätts av filens innehåll. Om filen har fel ändras ingenting.
 
   Fil  data/hushall.txt
 
-  [Öppna]  [Avbryt]
+  [Öppna]  [Öppna räkneexemplet]  [Avbryt]
+           Räkneexemplet läses från data/hushallExempel.txt.
+           Spara skriver ändå till data/hushall.txt.
 ```
-- Filen är alltid densamma, data/hushall.txt; namnet visas från `GET /status`. Kassören anger inget filnamn.
-- **Räkneexemplet (AK5.5):** repot levereras med räkneexemplet (direktivets avsnitt 9) som data/hushall.txt. Kassören startar programmet och väljer Öppna i menyn och sedan [Öppna]. Startvyn visar då Lön 25 200 kr, Spar 23 000 kr och Kort −1 300 kr. Ingen extra operation behövs. Väljer kassören senare Spara skrivs exemplet över med programmets data.
-- Om `GET /status` säger att det finns osparade ändringar visas bekräftelsen B-OPPNA först.
+- [Öppna] läser alltid programmets fil, data/hushall.txt; namnet visas från `GET /status` och skickas som `POST /oppna` med `{}`. Kassören anger inget filnamn.
+- [Öppna räkneexemplet] skickar `POST /oppna` med `{ exempel: true }` och läser data/hushallExempel.txt. Programmets fil för Spara är fortfarande data/hushall.txt, så statusraden (`GET /status`) visar "Fil: data/hushall.txt" även efter att exemplet har öppnats.
+- **Räkneexemplet (AK5.5):** repot levereras med räkneexemplet (direktivets avsnitt 9) som data/hushallExempel.txt. Kassören startar programmet, väljer Öppna i menyn och sedan [Öppna räkneexemplet]. Startvyn visar då Lön 25 200 kr, Spar 23 000 kr och Kort −1 300 kr. Väljer kassören senare Spara skrivs data/hushall.txt; exemplet skrivs aldrig över.
+- Om `GET /status` säger att det finns osparade ändringar visas bekräftelsen B-OPPNA först. Det gäller båda knapparna. I B-OPPNA är {filnamn} den fil som knappen läser: data/hushall.txt för [Öppna] och data/hushallExempel.txt för [Öppna räkneexemplet].
 - Efter lyckad Öppna visas startvyn med kvittensen.
 - Vid trasig fil (E-F3) visas radnummer och orsak från servern; data i programmet är oförändrad (K5).
 
@@ -451,18 +455,19 @@ Alla texter ordagrant. `{…}` är platshållare som fylls i med värden. Belopp
 | 3.11 | Beräkna ränta | Bokför ränta för en månad. Räntan räknas på månadens lägsta saldo enligt kontotypen och bokförs som en transaktion i kategorin Ränta på månadens sista dag. Räntan kan bokföras en gång per konto och månad. | Konto · Månad (T.ex. 2026-11.) · Panel: Valt konto | Beräkna ränta · Avbryt |
 | 3.12 | Månadssammanställning | Utfall mot budget per kategori för en månad. | Månad · Tabellrubrik: Sammanställning för {månad} · Kolumner: Plac · Kategori · Budget · Utfall · Avvikelse · Andel · Förklaring: se T-SAMM-FORKLARING | Visa sammanställning |
 | 3.13 | Spara | Spara alla konton, transaktioner och budgetposter till en fil. | Fil {filnamn} (Filen skrivs över med programmets data.) | Spara · Avbryt |
-| 3.14 | Öppna | Läs in konton, transaktioner och budgetposter från en fil. Allt som finns i programmet nu ersätts av filens innehåll. Om filen har fel ändras ingenting. | Fil {filnamn} | Öppna · Avbryt |
+| 3.14 | Öppna | Läs in konton, transaktioner och budgetposter från en fil. Allt som finns i programmet nu ersätts av filens innehåll. Om filen har fel ändras ingenting. | Fil {filnamn} · Hjälptext vid Öppna räkneexemplet (se T-EXEMPEL) | Öppna · Öppna räkneexemplet · Avbryt |
 | 3.15 | Avsluta | Stäng programmet. | – | Avsluta programmet · Avbryt |
 | Slutvy | Programmet är avslutat | Du kan stänga fliken. Starta programmet igen med node src/ui/server.js. | – | – |
 
 | Id | Text |
 | --- | --- |
 | T-SAMM-FORKLARING | Utfall = utgifter minus återbetalningar i kategorin under månaden. Avvikelse = utfall − budget. Ett positivt tal betyder att budgeten är överskriden. Andel = utfall delat med budget, i procent. Bara budgetposter med status Aktiv eller Avslutad räknas som budget. Inkomster och transaktioner i kategorin Överföring redovisas inte. |
-| T-START-TOM | Det finns inga konton än. Välj Lägg till konto i menyn, eller Öppna för att läsa in en sparad fil. |
+| T-START-TOM | Det finns inga konton än. Välj Lägg till konto i menyn, eller Öppna för att läsa in en sparad fil eller räkneexemplet. |
 | T-KONTO-TOMT | Kontot har inga transaktioner än. |
 | T-BUDGET-TOM | Det finns inga budgetposter än. |
 | T-SAMM-TOM | Det finns inga transaktioner eller budgetposter för {månad}. Sammanställningen är tom. |
 | T-RANTA-NOLL | Ingen ränta bokfördes: räntan för kontot "{konto}" i {månad} blev 0 kr. |
+| T-EXEMPEL | Räkneexemplet läses från data/hushallExempel.txt. Spara skriver ändå till data/hushall.txt. |
 
 ### 4.3 Kvittenser (grön ruta, efter "Klart –") och bekräftelser
 
@@ -483,6 +488,7 @@ Alla texter ordagrant. `{…}` är platshållare som fylls i med värden. Belopp
 | Beräkna ränta (0 kr) | se T-RANTA-NOLL |
 | Spara | Allt är sparat i filen "{filnamn}". |
 | Öppna | Filen "{filnamn}" är öppnad. |
+| Öppna räkneexemplet | Räkneexemplet "{filnamn}" är öppnat. Spara skriver till "data/hushall.txt". |
 
 Exempel: *Klart – Räntan för 2026-11 är bokförd på kontot "Spar": 100 kr den 2026-11-30. Nytt saldo: 23 100 kr.*
 
@@ -529,6 +535,11 @@ Felmeddelandena skapas av servern (model/ och storage/) som `meddelande` i `{ fe
 | E-F2 | Filen finns inte | SaknasFel, från storage/fil.js lasFil | Filen "{filnamn}" finns inte än. Välj Spara för att skapa den. Data i programmet är oförändrad. | K5 |
 | E-F3 | Trasig fil | FilformatFel, från storage/fil.js lasFil (via filformat.lasHushall) | Filen "{filnamn}" kunde inte öppnas. Rad {rad}: {orsak} Rätta filen och försök igen. Data i programmet är oförändrad. | K5, AK5.2–5.4 |
 | E-F4 | Filen kunde inte sparas | FilformatFel, från storage/fil.js sparaFil | Filen "{filnamn}" kunde inte sparas. Kontrollera att filen inte är skrivskyddad eller öppen i ett annat program, och försök igen. Data i programmet är oförändrad. | K5 |
+| E-S2 | Okänd adress (status 404) | SaknasFel, från ui/server.js | Adressen "{adress}" finns inte. | K6 |
+| E-S3 | Webbsidans fil finns inte (`GET /`, `/app.js`, `/style.css`; status 400) | SaknasFel, från storage/fil.js lasWebbfil | Filen "{namn}" finns inte. | K6, K7 d |
+| E-S4 | Oväntat fel, även en anropskropp som inte är giltig JSON (status 500); servern fortsätter att svara | OväntatFel (ingen felklass), från ui/server.js | Något gick fel i programmet. Data i programmet är oförändrad. Försök igen. | K6 |
+
+E-S2 och E-S3 visas inte i Webbvy; de anger ingen åtgärd eftersom texten kommer från servern.
 
 **Exempel på filfelen med den fasta filen:**
 - E-F2: *Fel – Filen "data/hushall.txt" finns inte än. Välj Spara för att skapa den. Data i programmet är oförändrad.*
@@ -560,10 +571,12 @@ Programmet fortsätter efter varje fel och menyn går att använda (avsnitt 2).
 | Runda | Uppdrag från TPL (sammandrag) | PO:s granskning – vad som avvisades | Ändring |
 | --- | --- | --- | --- |
 | 1 | Ta fram den externa designspecifikationen för webbgränssnittet: en vy per operation i K6 samt ändra och ta bort (beställarbeslut 1), ordagranna texter och felmeddelanden (AK6.2), vad "menyn" är i ett webbgränssnitt och en motivering mot gränssnittsprinciperna. | Version 1.0 innehöll sju frågor (F1–F7) med antaganden. Två antaganden avvisades: ett filnamnsfält vid Spara och Öppna (F1; PO beslutade att samma fil alltid används) och att Webbvy själv håller reda på osparade ändringar (F2; PO beslutade att servern gör det). F3–F7 godtogs: reglerna visas bara i felmeddelanden, servern ger kategorierna, belopp skrivs utan mellanslag, tolkningen av menyn gäller och ändrat ingående saldo prövas mot kontotypen. | Version 1.1: inget filnamnsfält, statusraden och varningarna bygger på `GET /status`, kategoriförslagen kommer från `GET /kategorier`, felmeddelandena för belopp säger "utan mellanslag", och felmeddelandet E-K8 gäller nu som beslut. En lista över vad som behövde läggas till i design.md fanns överst i dokumentet. |
-| 2 | Uppdatera till version 1.2 efter PO:s granskning av version 1.1. Vyerna, texterna och motiveringen godkändes; bara fem punkter skulle ändras. | Listan över tillägg till design.md skulle bort, eftersom design.md version 1.1 nu innehåller dem. Exemplen saknade den fasta filens namn. Det saknades en beskrivning av hur räkneexemplet öppnas (AK5.5), ett beslut om vem som formaterar sammanställningen och felklasser för filfelen. Designer-AI frågade om de två punkter som TPL:s uppdrag lämnat ofyllda och om felklasserna, som design.md inte angav. PO beslutade: exempelfilen är data/hushall.txt, servern ger andel som text och avvikelse som heltal, och filfelen är SaknasFel och FilformatFel. | Version 1.2: "Stämmer med design.md version 1.1." i huvudet. data/hushall.txt i exemplen i 3.13, 3.14 och 4.4. Beskrivning av hur räkneexemplet öppnas i 3.14. Formateringen i
+| 2 | Uppdatera till version 1.2 efter PO:s granskning av version 1.1. Vyerna, texterna och motiveringen godkändes; bara fem punkter skulle ändras. | Listan över tillägg till design.md skulle bort, eftersom design.md version 1.1 nu innehåller dem. Exemplen saknade den fasta filens namn. Det saknades en beskrivning av hur räkneexemplet öppnas (AK5.5), ett beslut om vem som formaterar sammanställningen och felklasser för filfelen. Designer-AI frågade om de två punkter som TPL:s uppdrag lämnat ofyllda och om felklasserna, som design.md inte angav. PO beslutade: exempelfilen är data/hushall.txt, servern ger andel som text och avvikelse som heltal, och filfelen är SaknasFel och FilformatFel. | Version 1.2: "Stämmer med design.md version 1.1." i huvudet. data/hushall.txt i exemplen i 3.13, 3.14 och 4.4. Beskrivning av hur räkneexemplet öppnas i 3.14. Formateringen i … (texten var avklippt i version 1.2 och finns inte kvar i git-historiken). |
+| 3 | Uppdatera till version 1.3 efter PO:s ändring av design.md till version 1.7 under Lab 3: räkneexemplet ligger i data/hushallExempel.txt och öppnas med `POST /oppna` och `{ exempel: true }`, Spara skriver alltid data/hushall.txt, och avsnitt 4.4 saknade text för tre serversvar. | Designer-AI ställde sju frågor. PO beslutade: (1) E-F2 behålls även för räkneexemplet och avvikelsen förs in i avsnitt 7. (2) {filnamn} i B-OPPNA är den fil som knappen läser. (3) E-S3 ger status 400. (4) Texterna i E-S2 och E-S3 ändras inte; en mening under tabellen i 4.4 förklarar att de inte visas i Webbvy. (5) Huvudets F1 får tillägget om räkneexemplet. (6) Den avklippta raden för runda 2 avslutas med en notering. (7) T-START-TOM nämner räkneexemplet. | Version 1.3: knappen [Öppna räkneexemplet] med hjälptext (T-EXEMPEL) och nytt flöde för räkneexemplet i 3.14, B-OPPNA gäller båda knapparna. Förtydligande i 3.13 att Spara alltid skriver data/hushall.txt. Båda valen i tabellen i avsnitt 3. Knapp, hjälptext och kvittens i 4.2 och 4.3. E-S2, E-S3 och E-S4 i 4.4. Avvikelse om räkneexemplet i avsnitt 7. |
 
 ## 7. Avvikelser vid implementation (fylls i under Lab 3)
 
 | Vy | Avvikelse från designen | Motivering (designbeslut) |
 | --- | --- | --- |
-|  |  |  |
+| 3.13 Spara, 3.14 Öppna | Räkneexemplet (AK5.5) var data/hushall.txt och öppnades med [Öppna] (version 1.2). Nu ligger det i data/hushallExempel.txt och öppnas med en egen knapp, [Öppna räkneexemplet] (`POST /oppna` med `{ exempel: true }`). Spara skriver alltid data/hushall.txt. | PO:s beslut 2026-11-25 (design.md avsnitt 7): exemplet ska inte skrivas över när kassören sparar. |
+| 3.14 Öppna, 4.4 E-F2 | Saknas data/hushallExempel.txt visar [Öppna räkneexemplet] E-F2, som hänvisar till Spara ("Välj Spara för att skapa den."), fast Spara aldrig skapar räkneexemplet. | PO:s beslut 2026-11-26 (designrunda 3): texten behålls. Det godtas eftersom exemplet alltid följer med repot och en egen text kräver en kodändring. |
