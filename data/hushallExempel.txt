@@ -1,0 +1,20 @@
+HUSHALL;1
+[KONTON]
+Lön;Lönekonto;12000
+Spar;Sparkonto;20000
+Kort;Kreditkort;0
+[BUDGETPOSTER]
+Boende;2026-11;6500;Aktiv
+Mat;2026-11;3000;Aktiv
+Nöje;2026-11;500;Aktiv
+Hälsa;2026-11;600;Planerad
+Mat;2026-10;3000;Avslutad
+[TRANSAKTIONER]
+Lön;2026-11-01;25000;Inkomst;Månadsavgifter
+Lön;2026-11-03;-6500;Boende;Hyra
+Lön;2026-11-05;-3000;Överföring;Till sparkontot
+Spar;2026-11-05;3000;Överföring;Från lönekontot
+Kort;2026-11-08;-1200;Mat;Storhandling
+Kort;2026-11-20;200;Mat;Retur av varor
+Lön;2026-11-22;-2300;Mat;Veckohandling
+Kort;2026-11-30;-300;Hälsa;Apotek
