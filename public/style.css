@@ -1,1 +1,395 @@
-/* Webbvy (stilmall) – K6. Implementeras i senare backlog-post. */
+/* Webbvy (stilmall) – K6, design-extern avsnitt 2 och 5: sidhuvud med statusrad, fast sidomeny,
+   meddelanderuta, innehåll och hjälppanel. Bara systemtypsnitt och lokala resurser. */
+
+:root {
+  --text: #1f2328;
+  --dampad: #57606a;
+  --linje: #d0d7de;
+  --yta: #f6f8fa;
+  --accent: #0b5cad;
+  --klart-bg: #e6f4ea;
+  --klart-kant: #1a7f37;
+  --fel-bg: #fdecea;
+  --fel-kant: #b42318;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--text);
+  background: #fff;
+}
+
+/* --- Sidhuvud med statusrad --- */
+
+.sidhuvud {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 2rem;
+  padding: 0.75rem 1.5rem;
+  border-bottom: 1px solid var(--linje);
+  background: var(--yta);
+}
+
+.sidhuvud h1 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.statusrad {
+  margin: 0;
+  display: flex;
+  gap: 1.5rem;
+  color: var(--dampad);
+}
+
+.osparat {
+  color: var(--fel-kant);
+  font-weight: 600;
+}
+
+/* --- Sidomeny och innehåll --- */
+
+.sida {
+  display: grid;
+  grid-template-columns: 15rem 1fr;
+  min-height: calc(100vh - 3.5rem);
+}
+
+.meny {
+  padding: 1rem;
+  border-right: 1px solid var(--linje);
+  background: var(--yta);
+}
+
+.meny h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+.meny h3 {
+  margin: 0.9rem 0 0.25rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--dampad);
+}
+
+.meny ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.meny button {
+  display: block;
+  width: 100%;
+  padding: 0.3rem 0.5rem;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.meny button:hover {
+  background: #eaeef2;
+}
+
+.meny button[aria-current] {
+  background: var(--accent);
+  color: #fff;
+}
+
+.innehall {
+  padding: 1rem 1.5rem 3rem;
+  max-width: 70rem;
+}
+
+.vy h2 {
+  margin: 0.5rem 0 0.25rem;
+  font-size: 1.4rem;
+}
+
+.vy h2:focus {
+  outline: none;
+}
+
+.vy h3 {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 1.05rem;
+}
+
+.ingress {
+  margin: 0 0 1rem;
+  color: var(--dampad);
+}
+
+/* --- Meddelanderuta --- */
+
+.meddelande {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid;
+  border-left-width: 6px;
+  border-radius: 4px;
+}
+
+.meddelande p {
+  margin: 0;
+}
+
+.meddelande.klart {
+  background: var(--klart-bg);
+  border-color: var(--klart-kant);
+}
+
+.meddelande.fel {
+  background: var(--fel-bg);
+  border-color: var(--fel-kant);
+}
+
+.meddelande:focus {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
+/* --- Formulär: ledtext till vänster, fält, hjälptext till höger --- */
+
+.med-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 18rem;
+  gap: 2rem;
+  align-items: start;
+}
+
+.falt {
+  display: grid;
+  grid-template-columns: 11rem auto 1fr;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+  margin: 0 0 0.6rem;
+}
+
+.falt label,
+.ledtext {
+  font-weight: 600;
+}
+
+.hjalp {
+  color: var(--dampad);
+  font-size: 0.9rem;
+}
+
+.med-enhet {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+
+input[type="text"],
+select {
+  width: 14rem;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid #8c959f;
+  border-radius: 4px;
+  font: inherit;
+}
+
+input.kort {
+  width: 5rem;
+}
+
+input:focus,
+select:focus,
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.info {
+  color: var(--dampad);
+}
+
+.uppgifter dl,
+dl.uppgifter {
+  display: grid;
+  grid-template-columns: 11rem auto;
+  gap: 0.25rem 0.75rem;
+  margin: 0 0 0.75rem;
+}
+
+dt {
+  font-weight: 600;
+}
+
+dd {
+  margin: 0;
+}
+
+.panel {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--linje);
+  border-radius: 4px;
+  background: var(--yta);
+}
+
+.panel h3 {
+  margin-top: 0;
+}
+
+.panel ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+/* --- Knappar --- */
+
+.knappar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+button {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid #8c959f;
+  border-radius: 4px;
+  background: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #eaeef2;
+}
+
+button.primar {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+button.primar:hover {
+  background: #094a8c;
+}
+
+button.fara {
+  border-color: var(--fel-kant);
+  background: var(--fel-kant);
+  color: #fff;
+}
+
+button.fara:hover {
+  background: #8f1c13;
+}
+
+/* --- Tabeller --- */
+
+table {
+  border-collapse: collapse;
+  margin: 0.5rem 0 1rem;
+}
+
+th,
+td {
+  padding: 0.35rem 0.75rem;
+  border-bottom: 1px solid var(--linje);
+  text-align: left;
+  vertical-align: middle;
+}
+
+th {
+  background: var(--yta);
+  font-weight: 600;
+}
+
+.tal {
+  text-align: right;
+  white-space: nowrap;
+}
+
+td button {
+  padding: 0.15rem 0.6rem;
+  font-size: 0.9rem;
+}
+
+.radknappar {
+  white-space: nowrap;
+}
+
+td button + button {
+  margin-left: 0.35rem;
+}
+
+.statusovergang {
+  font-weight: 600;
+  margin: 0;
+}
+
+.forklaring p {
+  margin: 0.15rem 0;
+  color: var(--dampad);
+}
+
+/* --- Bekräftelse mitt på sidan --- */
+
+.bakgrund {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.bekraftelse {
+  max-width: 32rem;
+  margin: 1rem;
+  padding: 1.25rem 1.5rem;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+
+.bekraftelse h2 {
+  margin-top: 0;
+  font-size: 1.2rem;
+}
+
+/* --- Smal skärm --- */
+
+@media (max-width: 60rem) {
+  .sida {
+    grid-template-columns: 1fr;
+  }
+  .meny {
+    border-right: 0;
+    border-bottom: 1px solid var(--linje);
+  }
+  .med-panel {
+    grid-template-columns: 1fr;
+  }
+  .falt {
+    grid-template-columns: 1fr;
+  }
+}
