@@ -102,6 +102,24 @@ export class Hushall {
     return t;
   }
 
+  // Bokför månadens ränta på kontot (K3). Kontot finns inte → SaknasFel (E-K6); fel månad →
+  // ValideringsFel (E-M1); en transaktion i kategorin Ränta finns redan för månaden, även en som
+  // kassören registrerat själv → DubblettFel (E-R1). Returnerar transaktionen eller null.
+  beraknaRanta(kontonamn, manad) {
+    const konto = this.hittaKonto(kontonamn);
+    const man = kontrolleraManad(manad);
+    const nyckel = normaliseraKategori('Ränta');
+    const redanBokford = konto
+      .hamtaTransaktioner()
+      .some((t) => t.datum.startsWith(`${man}-`) && normaliseraKategori(t.kategori) === nyckel);
+    if (redanBokford) {
+      throw new DubblettFel(
+        `Räntan för ${man} är redan bokförd på kontot "${konto.namn}". Den kan bara bokföras en gång per konto och månad.`
+      );
+    }
+    return konto.beraknaRanta(man);
+  }
+
   // Skapar en budgetpost med status Planerad. Budgetpost kontrollerar fälten först (ValideringsFel);
   // därefter nekas en andra budgetpost för samma kategori och månad, oavsett status (AK2.3, E-B4).
   // Kategorier jämförs med normaliseraKategori (beställarbeslut 4). Inget läggs till om ett fel kastas.
