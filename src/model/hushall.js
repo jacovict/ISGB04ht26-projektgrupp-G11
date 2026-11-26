@@ -4,7 +4,7 @@ import { DubblettFel, SaknasFel, RegelFel } from './fel.js';
 import { Transaktion } from './transaktion.js';
 import { Budgetpost, kontrolleraManad } from './budgetpost.js';
 import { kontrolleraKontonamn, kontrolleraIngaendeSaldo } from './konto.js';
-import { normaliseraKategori, visningsnamn, formateraBelopp, kontrolleraKategori } from './kategori.js';
+import { normaliseraKategori, visningsnamn, formateraBelopp, kontrolleraKategori, tolkaHeltal } from './kategori.js';
 
 export class Hushall {
   #konton = [];
@@ -87,19 +87,36 @@ export class Hushall {
 
   // Ersätter transaktion nr (räknat från 1) på plats. Statusen på månadens budgetpost spelar
   // ingen roll (beställarbeslut 3); K1-reglerna och kontotypens regel gäller.
+  // nr får komma som tal eller text (tolkaHeltal); ett nummer som inte går att tolka eller inte
+  // finns ger SaknasFel (E-T7) med värdet som det skickades in.
   andraTransaktion(kontonamn, nr, datum, kategori, belopp, beskrivning) {
     const konto = this.hittaKonto(kontonamn);
     const transaktioner = konto.hamtaTransaktioner();
-    if (!Number.isInteger(nr) || nr < 1 || nr > transaktioner.length) {
+    const nummer = tolkaHeltal(nr);
+    if (!Number.isInteger(nummer) || nummer < 1 || nummer > transaktioner.length) {
       throw new SaknasFel(
         `Kontot "${konto.namn}" har ingen transaktion med nummer ${nr ?? ''}. Välj en transaktion i listan.`
       );
     }
     const t = new Transaktion(datum, belopp, kategori, beskrivning);
-    if (!konto.ersattTransaktion(nr, t)) {
-      throw this.#saldoFel(konto, konto.saldo() - transaktioner[nr - 1].belopp + t.belopp);
+    if (!konto.ersattTransaktion(nummer, t)) {
+      throw this.#saldoFel(konto, konto.saldo() - transaktioner[nummer - 1].belopp + t.belopp);
     }
     return t;
+  }
+
+  // Alla kategorier i transaktioner och budgetposter, en gång var (normaliseraKategori,
+  // beställarbeslut 4), med visningsnamn och i svensk bokstavsordning.
+  hamtaKategorier() {
+    const kategorier = new Map();
+    const alla = [
+      ...this.#konton.flatMap((k) => k.hamtaTransaktioner().map((t) => t.kategori)),
+      ...this.#budgetposter.map((p) => p.kategori),
+    ];
+    for (const kategori of alla) {
+      kategorier.set(normaliseraKategori(kategori), visningsnamn(kategori));
+    }
+    return [...kategorier.values()].sort((a, b) => a.localeCompare(b, 'sv'));
   }
 
   // Bokför månadens ränta på kontot (K3). Kontot finns inte → SaknasFel (E-K6); fel månad →

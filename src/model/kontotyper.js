@@ -48,9 +48,11 @@ export class Kontotyper {
     const konto = new Klass(namn, ingaendeSaldo);
     // Den nya kontotypens egen regel prövas, med det ingående saldot som ändring från 0 kr.
     // Samma princip som i Hushall.andraKonto: ett ingående saldo på 0 kr är ingen ändring och prövas inte.
-    if (ingaendeSaldo !== 0 && !konto.tillaten(ingaendeSaldo, ingaendeSaldo)) {
+    // Saldot är det som Konto har tolkat (tolkaHeltal), inte det som skickades in, som kan vara text.
+    const saldo = konto.ingaendeSaldo;
+    if (saldo !== 0 && !konto.tillaten(saldo, saldo)) {
       throw new ValideringsFel(
-        `Ingående saldo ${formateraBelopp(ingaendeSaldo)} är inte tillåtet för kontotypen ${konto.kontotyp()}. Ange ett högre ingående saldo eller välj en annan kontotyp.`
+        `Ingående saldo ${formateraBelopp(saldo)} är inte tillåtet för kontotypen ${konto.kontotyp()}. Ange ett högre ingående saldo eller välj en annan kontotyp.`
       );
     }
     return konto;

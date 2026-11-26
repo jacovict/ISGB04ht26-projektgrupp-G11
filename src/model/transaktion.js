@@ -1,7 +1,7 @@
 // Transaktion – K1. Konstruktorn kontrollerar fälten, så en Transaktion är alltid giltig.
 
 import { ValideringsFel } from './fel.js';
-import { kontrolleraKategori } from './kategori.js';
+import { kontrolleraKategori, tolkaHeltal } from './kategori.js';
 
 // Kontrollerar att datum har formen ÅÅÅÅ-MM-DD (E-T3) och finns i kalendern (E-T4).
 function kontrolleraDatum(datum) {
@@ -24,19 +24,21 @@ function kontrolleraDatum(datum) {
   return text;
 }
 
-// Kontrollerar att beloppet är ett heltal (E-T2) och inte 0 (E-T1, AK1.3).
+// Kontrollerar att beloppet (tal eller text, tolkaHeltal) är ett heltal (E-T2) och inte 0 (E-T1, AK1.3).
+// Returnerar beloppet som tal; felmeddelandet visar värdet som det skickades in.
 function kontrolleraBelopp(belopp) {
-  if (!Number.isInteger(belopp)) {
+  const tal = tolkaHeltal(belopp);
+  if (!Number.isInteger(tal)) {
     throw new ValideringsFel(
       `Beloppet "${belopp ?? ''}" är inte ett belopp i hela kronor. Skriv bara siffror utan mellanslag, med minustecken för en utgift, till exempel -1200.`
     );
   }
-  if (belopp === 0) {
+  if (tal === 0) {
     throw new ValideringsFel(
       'Beloppet får inte vara 0. Skriv ett positivt belopp för en insättning eller ett negativt för en utgift, till exempel -1200.'
     );
   }
-  return belopp;
+  return tal;
 }
 
 export class Transaktion {

@@ -2,7 +2,7 @@
 
 import { Status } from './status.js';
 import { ValideringsFel, StatusFel } from './fel.js';
-import { kontrolleraKategori, visningsnamn } from './kategori.js';
+import { kontrolleraKategori, visningsnamn, tolkaHeltal } from './kategori.js';
 
 // Kontrollerar att månaden har formen ÅÅÅÅ-MM med månad 01–12 (E-M1).
 export function kontrolleraManad(manad) {
@@ -16,19 +16,21 @@ export function kontrolleraManad(manad) {
   return text;
 }
 
-// Kontrollerar att budgetbeloppet är ett heltal (E-B3) som är 0 eller större (E-B2, AK1.3).
+// Kontrollerar att budgetbeloppet (tal eller text, tolkaHeltal) är ett heltal (E-B3) som är 0 eller
+// större (E-B2, AK1.3). Returnerar beloppet som tal; felmeddelandet visar värdet som det skickades in.
 function kontrolleraBudgetbelopp(belopp) {
-  if (!Number.isInteger(belopp)) {
+  const tal = tolkaHeltal(belopp);
+  if (!Number.isInteger(tal)) {
     throw new ValideringsFel(
       `Budgetbeloppet "${belopp ?? ''}" är inte ett belopp i hela kronor. Skriv bara siffror utan mellanslag, till exempel 3000.`
     );
   }
-  if (belopp < 0) {
+  if (tal < 0) {
     throw new ValideringsFel(
       'Budgetbeloppet får inte vara negativt. Skriv ett belopp i hela kronor som är 0 eller större.'
     );
   }
-  return belopp;
+  return tal;
 }
 
 export class Budgetpost {
