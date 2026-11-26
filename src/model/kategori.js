@@ -21,6 +21,21 @@ export function formateraBelopp(belopp) {
   return `${heltal < 0 ? '−' : ''}${siffror} kr`;
 }
 
+// Tolkar ett belopp, ingående saldo eller transaktionsnummer som kan komma som tal eller som text
+// (design.md avsnitt 7). Ett tal godtas om det är ett heltal; text godtas bara som ett valfritt
+// minustecken följt av siffror. Returnerar heltalet, eller NaN som markering för "inte ett heltal",
+// som den anropande kontrollen gör om till sitt eget felmeddelande (E-T2, E-B3, E-K4, E-T7).
+export function tolkaHeltal(varde) {
+  if (typeof varde === 'number') {
+    return Number.isInteger(varde) ? varde : NaN;
+  }
+  if (typeof varde === 'string' && /^-?\d+$/.test(varde)) {
+    const tal = Number(varde);
+    return Number.isSafeInteger(tal) ? tal : NaN;
+  }
+  return NaN;
+}
+
 // Kontrollerar att kategorin inte är tom (E-KAT) och returnerar den utan omgivande blanksteg.
 export function kontrolleraKategori(k) {
   const kategori = String(k ?? '').trim();

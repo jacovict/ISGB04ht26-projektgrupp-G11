@@ -2,7 +2,7 @@
 // tolkning och skrivning av texten sker i filformat.js. Ändrar aldrig något hushåll i minnet.
 
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { dirname, resolve, relative, isAbsolute, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { SaknasFel, FilformatFel } from '../model/fel.js';
@@ -43,6 +43,28 @@ export function lasFil(filnamn = STANDARDFIL) {
         `Filen "${filnamn}" kunde inte öppnas. ${fel.message} Rätta filen och försök igen. Data i programmet är oförändrad.`,
         fel.rad
       );
+    }
+    throw fel;
+  }
+}
+
+// Mappen med webbsidans filer (Webbvy).
+const WEBBMAPP = resolve(ROTMAPP, 'public');
+
+// Läser en av webbsidans filer i public/ åt Server (K7 d) och returnerar innehållet som text (UTF-8).
+// Namnet löses upp mot public/; pekar resultatet utanför public/ (t.ex. "../data/hushall.txt" eller
+// en absolut sökväg), eller finns filen inte, kastas SaknasFel och inget läses.
+export function lasWebbfil(namn) {
+  const sokvagen = resolve(WEBBMAPP, String(namn ?? ''));
+  const iMappen = relative(WEBBMAPP, sokvagen);
+  if (iMappen === '' || iMappen === '..' || iMappen.startsWith(`..${sep}`) || isAbsolute(iMappen)) {
+    throw new SaknasFel(`Filen "${namn ?? ''}" finns inte.`);
+  }
+  try {
+    return readFileSync(sokvagen, 'utf8');
+  } catch (fel) {
+    if (fel.code === 'ENOENT' || fel.code === 'EISDIR' || fel.code === 'ENOTDIR') {
+      throw new SaknasFel(`Filen "${namn ?? ''}" finns inte.`);
     }
     throw fel;
   }

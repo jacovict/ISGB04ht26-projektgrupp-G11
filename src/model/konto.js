@@ -3,6 +3,7 @@
 import { ValideringsFel } from './fel.js';
 import { Transaktion } from './transaktion.js';
 import { kontrolleraManad } from './budgetpost.js';
+import { tolkaHeltal } from './kategori.js';
 
 // Kontrollerar att kontonamnet inte är tomt (E-K1) och returnerar det utan omgivande blanksteg.
 export function kontrolleraKontonamn(namn) {
@@ -13,14 +14,16 @@ export function kontrolleraKontonamn(namn) {
   return text;
 }
 
-// Kontrollerar att ingående saldo är ett heltal (E-K4).
+// Kontrollerar att ingående saldo (tal eller text, tolkaHeltal) är ett heltal (E-K4).
+// Returnerar saldot som tal; felmeddelandet visar värdet som det skickades in.
 export function kontrolleraIngaendeSaldo(saldo) {
-  if (!Number.isInteger(saldo)) {
+  const tal = tolkaHeltal(saldo);
+  if (!Number.isInteger(tal)) {
     throw new ValideringsFel(
       `Ingående saldo "${saldo ?? ''}" är inte ett belopp i hela kronor. Skriv bara siffror utan mellanslag, till exempel 12000 eller -500.`
     );
   }
-  return saldo;
+  return tal;
 }
 
 export class Konto {
