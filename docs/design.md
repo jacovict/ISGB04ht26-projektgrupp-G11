@@ -241,6 +241,9 @@ SLUT
 - Motivering av formatvalet: Formatet är lättläst och går enkelt att dela upp i JavaScript utan externa bibliotek.
 - Tom rad hoppas över
 - Kontonamn jämförs utan hänsyn till stora och små bokstäver vid inläsning (beslut 6): en transaktion med kontot "lön" hör till kontot "Lön". Två konton med samma namn i filen, även med olika skiftläge, ger FilformatFel: Rad {n}: kontot "{namn}" finns redan i filen.
+- Specialtecken i textfält (kontonamn, kategori, beskrivning): semikolon skrivs `\;` och omvänt snedstreck skrivs `\\`. lasHushall läser tillbaka dem till `;` och `\`.
+- Radslut: lasHushall godtar både `\n` och `\r\n` samt en BOM i början av filen. skrivHushall skriver `\n` och inga tomma rader.
+- Felorsaker utöver AK5.2–5.4: Rad 1: första raden ska vara HUSHALL;1. · Rad {n}: okänd sektion "{text}". · Rad {n}: raden ligger utanför en sektion. · Rad {n}: fel antal fält ({antal}, ska vara {väntat}). Fel som modellen hittar (t.ex. ogiltigt datum, otillåtet saldo för kontotypen, dubblett av budgetpost) ges som Rad {n}: följt av modellens felmeddelande, så att ingen kontroll görs två gånger.
 - Sparas data/hushall.txt
 
 - Repot levereras med räkneexemplet som data/hushallExempel.txt (AK5.5), för provkörning. data/hushall.txt är kassörens egen fil; den skapas första gången kassören väljer Spara och committas inte.
@@ -311,6 +314,7 @@ Kort;2026-11-30;-300;Hälsa;Apotek
 | 2026-11-26 | Kontotyper.skapa prövar ingående saldo med kontotypens egen regel, tillaten(ingående saldo, ingående saldo); ett ingående saldo på 0 kr prövas inte. | Utan typnamn (AK3.3); samma princip som andraKonto, så att en framtida kontotyp som Barnkonto kan skapas med 0 kr. Godkänt av PO. | model/kontotyper.js |
 | 2026-11-26 | Räntetransaktionen får beskrivningen "Ränta ÅÅÅÅ-MM". En Ränta-transaktion som kassören registrerat själv räknas också, så beräkna ränta ger då E-R1. | Kontraktet angav ingen beskrivning; kontraktet och design-extern 3.11: räntan bokförs en gång per konto och månad. Godkänt av PO. | model/konto.js, model/hushall.js |
 | 2026-11-26 | Andelen avrundas till närmaste tiondel (exakt hälften bort från noll); en negativ andel skrivs med bindestreck (-5,0 %). | Kontraktet angav varken avrundning eller tecken för negativ andel. Bindestreck fungerar i CSV-export (K9). Godkänt av PO. | logic/ |
+| 2026-11-26 | Filformatet: `\;` och `\\` för specialtecken i textfält; fasta felorsaker för filens struktur och modellens felmeddelande efter "Rad {n}: " för övriga fel; `\n` och `\r\n` godtas vid inläsning, `\n` skrivs. | Avsnitt 6 angav inte detta; utan det går filen sönder vid semikolon i en beskrivning och vid CRLF-radslut på Windows (* text=auto). PO:s beslut inför #6. | storage/filformat.js, README |
 # När designen är klar: textversion för kodagenten
 
 | **Det här steget gör TPL åt er – men bara omvandlingen, inte innehållet.**<br>1. Klistra in eller ladda upp det här dokumentet hos TPL med uppdraget: ”Här är vår design. Gör om den till markdown ordagrant: samma rubriker, tabeller och formuleringar. Lägg inte till, ta inte bort och förbättra ingenting. Skriv [bild] där klassdiagrammets bild står. Svara bara med markdown-texten.”<br>2. Spara svaret som docs/design.md (ny fil i VS Code, klistra in, spara).<br>3. Läs textversionen mot det här dokumentet. Stämmer något inte: rätta i design.md eller be om en ny omvandling.<br>4. Committa båda filerna och notera omvandlingen i AI-loggen.<br>5. När designen ändras: ändra först här i Word-filen och gör sedan om steg 1–4. |
