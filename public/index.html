@@ -2,8 +2,529 @@
 <html lang="sv">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Hushållsbudgeten – Kollektivet Sandgrund</title>
+  <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/app.js"></script>
 </head>
 <body>
+  <!-- Webbvy (view) – K6. Vyerna och texterna följer docs/design-extern.md version 1.4.
+       Sidan visar bara det servern levererar och skickar inmatningen oförändrad (AK6.3). -->
+
+  <header class="sidhuvud">
+    <h1>Hushållsbudgeten – Kollektivet Sandgrund</h1>
+    <p class="statusrad" id="statusrad">
+      <span id="statusFil">Fil: </span>
+      <span id="statusOsparat" class="osparat" hidden>Osparade ändringar</span>
+    </p>
+  </header>
+
+  <div class="sida">
+    <nav class="meny" id="meny" aria-labelledby="menyRubrik">
+      <h2 id="menyRubrik">Meny</h2>
+      <h3>Konton</h3>
+      <ul>
+        <li><button type="button" data-vy="konton">Konton</button></li>
+        <li><button type="button" data-vy="lagg-till-konto">Lägg till konto</button></li>
+        <li><button type="button" data-vy="andra-konto">Ändra konto</button></li>
+        <li><button type="button" data-vy="ta-bort-konto">Ta bort konto</button></li>
+        <li><button type="button" data-vy="visa-konto">Visa konto</button></li>
+      </ul>
+      <h3>Transaktioner</h3>
+      <ul>
+        <li><button type="button" data-vy="registrera-transaktion">Registrera transaktion</button></li>
+        <li><button type="button" data-vy="andra-transaktion">Ändra transaktion</button></li>
+        <li><button type="button" data-vy="berakna-ranta">Beräkna ränta</button></li>
+      </ul>
+      <h3>Budget</h3>
+      <ul>
+        <li><button type="button" data-vy="skapa-budgetpost">Skapa budgetpost</button></li>
+        <li><button type="button" data-vy="aktivera-budgetpost">Aktivera budgetpost</button></li>
+        <li><button type="button" data-vy="avsluta-budgetpost">Avsluta budgetpost</button></li>
+        <li><button type="button" data-vy="andra-budgetpost">Ändra budgetpost</button></li>
+      </ul>
+      <h3>Sammanställning</h3>
+      <ul>
+        <li><button type="button" data-vy="sammanstallning">Månadssammanställning</button></li>
+      </ul>
+      <h3>Fil</h3>
+      <ul>
+        <li><button type="button" data-vy="spara">Spara</button></li>
+        <li><button type="button" data-vy="oppna">Öppna</button></li>
+        <li><button type="button" data-vy="avsluta">Avsluta</button></li>
+      </ul>
+    </nav>
+
+    <main class="innehall">
+      <!-- Meddelanderuta: "Klart – …" (grön) eller "Fel – …" (röd). -->
+      <div id="meddelande" class="meddelande" role="alert" tabindex="-1" hidden>
+        <p id="meddelandeText"></p>
+        <button type="button" id="meddelandeStang">Stäng</button>
+      </div>
+
+      <!-- Förslag i konto- och kategorifälten (från GET /konton och GET /kategorier). -->
+      <datalist id="kontoForslag"></datalist>
+      <datalist id="kategoriForslag"></datalist>
+
+      <!-- 3.0 Startvy – Konton -->
+      <section class="vy" id="vy-konton" hidden>
+        <h2 tabindex="-1">Konton</h2>
+        <p class="ingress">Alla konton med kontotyp och saldo.</p>
+        <table id="kontonTabell">
+          <thead><tr><th>Namn</th><th>Kontotyp</th><th class="tal">Saldo</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <p id="kontonTom" hidden>Det finns inga konton än. Välj Lägg till konto i menyn, eller Öppna för att läsa in en sparad fil eller räkneexemplet.</p>
+        <p class="knappar">
+          <button type="button" data-ga="lagg-till-konto">Lägg till konto</button>
+          <button type="button" data-ga="registrera-transaktion">Registrera transaktion</button>
+        </p>
+      </section>
+
+      <!-- 3.1 Lägg till konto -->
+      <section class="vy" id="vy-lagg-till-konto" hidden>
+        <h2 tabindex="-1">Lägg till konto</h2>
+        <p class="ingress">Lägg upp ett nytt konto. Namnet måste vara unikt.</p>
+        <div class="med-panel">
+          <form id="formLaggTillKonto" autocomplete="off">
+            <div class="falt">
+              <label for="ltkNamn">Kontonamn</label>
+              <input type="text" id="ltkNamn" name="namn">
+              <span class="hjalp">Ett namn som inget annat konto har.</span>
+            </div>
+            <div class="falt">
+              <label for="ltkTyp">Kontotyp</label>
+              <select id="ltkTyp" name="typ"></select>
+            </div>
+            <div class="falt">
+              <label for="ltkSaldo">Ingående saldo</label>
+              <span class="med-enhet"><input type="text" id="ltkSaldo" name="ingaendeSaldo"> kr</span>
+              <span class="hjalp">Hela kronor, t.ex. 12000 eller -500.</span>
+            </div>
+            <p class="knappar">
+              <button type="submit" class="primar">Lägg till konto</button>
+              <button type="button" class="avbryt">Avbryt</button>
+            </p>
+          </form>
+          <aside class="panel">
+            <h3>Befintliga konton</h3>
+            <ul id="befintligaKonton"></ul>
+          </aside>
+        </div>
+      </section>
+
+      <!-- 3.2 Ändra konto -->
+      <section class="vy" id="vy-andra-konto" hidden>
+        <h2 tabindex="-1">Ändra konto</h2>
+        <p class="ingress">Byt namn eller ingående saldo på ett konto. Kontotypen kan inte ändras.</p>
+        <form id="formAndraKonto" autocomplete="off">
+          <div class="falt">
+            <label for="akKonto">Konto</label>
+            <input type="text" id="akKonto" name="konto" list="kontoForslag">
+            <span class="hjalp">Skriv eller välj ett av förslagen.</span>
+          </div>
+          <div id="akUppgifter" class="uppgifter" data-aterstall hidden>
+            <h3>Nuvarande uppgifter</h3>
+            <dl>
+              <dt>Kontotyp</dt><dd id="akTyp"></dd>
+              <dt>Saldo</dt><dd id="akSaldo"></dd>
+            </dl>
+          </div>
+          <p id="akIngetValt" class="info" data-aterstall="visa">Skriv namnet på ett befintligt konto för att se dess uppgifter.</p>
+          <div class="falt">
+            <label for="akNyttNamn">Nytt kontonamn</label>
+            <input type="text" id="akNyttNamn" name="nyttNamn">
+          </div>
+          <div class="falt">
+            <label for="akNyttSaldo">Nytt ingående saldo</label>
+            <span class="med-enhet"><input type="text" id="akNyttSaldo" name="nyttIngaendeSaldo"> kr</span>
+            <span class="hjalp">Hela kronor.</span>
+          </div>
+          <p class="knappar">
+            <button type="submit" class="primar">Spara ändringen</button>
+            <button type="button" class="avbryt">Avbryt</button>
+          </p>
+        </form>
+      </section>
+
+      <!-- 3.3 Ta bort konto -->
+      <section class="vy" id="vy-ta-bort-konto" hidden>
+        <h2 tabindex="-1">Ta bort konto</h2>
+        <p class="ingress">Bara ett konto utan transaktioner kan tas bort.</p>
+        <form id="formTaBortKonto" autocomplete="off">
+          <div class="falt">
+            <label for="tbkKonto">Konto</label>
+            <input type="text" id="tbkKonto" name="konto" list="kontoForslag">
+            <span class="hjalp">Skriv eller välj ett av förslagen.</span>
+          </div>
+          <div id="tbkUppgifter" class="uppgifter" data-aterstall hidden>
+            <dl>
+              <dt>Kontotyp</dt><dd id="tbkTyp"></dd>
+              <dt>Saldo</dt><dd id="tbkSaldo"></dd>
+              <dt>Transaktioner</dt><dd id="tbkAntal"></dd>
+            </dl>
+          </div>
+          <p id="tbkIngetValt" class="info" data-aterstall="visa">Skriv namnet på ett befintligt konto för att se dess uppgifter.</p>
+          <p class="knappar">
+            <button type="submit" class="primar fara">Ta bort konto</button>
+            <button type="button" class="avbryt">Avbryt</button>
+          </p>
+        </form>
+      </section>
+
+      <!-- 3.4 Registrera transaktion -->
+      <section class="vy" id="vy-registrera-transaktion" hidden>
+        <h2 tabindex="-1">Registrera transaktion</h2>
+        <p class="ingress">Registrera en insättning eller en utgift på ett konto.</p>
+        <div class="med-panel">
+          <form id="formRegistreraTransaktion" autocomplete="off">
+            <div class="falt">
+              <label for="rtKonto">Konto</label>
+              <input type="text" id="rtKonto" name="konto" list="kontoForslag">
+              <span class="hjalp">Skriv eller välj ett av förslagen.</span>
+            </div>
+            <div class="falt">
+              <label for="rtDatum">Datum</label>
+              <input type="text" id="rtDatum" name="datum" placeholder="ÅÅÅÅ-MM-DD">
+              <span class="hjalp">T.ex. 2026-11-08.</span>
+            </div>
+            <div class="falt">
+              <label for="rtBelopp">Belopp</label>
+              <span class="med-enhet"><input type="text" id="rtBelopp" name="belopp"> kr</span>
+              <span class="hjalp">Positivt = insättning, negativt = utgift. T.ex. -1200.</span>
+            </div>
+            <div class="falt">
+              <label for="rtKategori">Kategori</label>
+              <input type="text" id="rtKategori" name="kategori" list="kategoriForslag">
+            </div>
+            <div class="falt">
+              <label for="rtBeskrivning">Beskrivning</label>
+              <input type="text" id="rtBeskrivning" name="beskrivning">
+              <span class="hjalp">Valfri text, t.ex. Storhandling.</span>
+            </div>
+            <p class="knappar">
+              <button type="submit" class="primar">Registrera transaktion</button>
+              <button type="button" class="avbryt">Avbryt</button>
+            </p>
+          </form>
+          <aside class="panel">
+            <div id="rtPanel" data-aterstall hidden>
+              <h3>Valt konto</h3>
+              <p id="rtPanelKonto"></p>
+              <p id="rtPanelSaldo"></p>
+            </div>
+            <p>Flytt mellan egna konton: registrera två transaktioner i kategorin Överföring, en på varje konto. Överföring räknas inte i månadssammanställningen.</p>
+          </aside>
+        </div>
+      </section>
+
+      <!-- 3.5 Ändra transaktion -->
+      <section class="vy" id="vy-andra-transaktion" hidden>
+        <h2 tabindex="-1">Ändra transaktion</h2>
+        <p class="ingress">Ändra en registrerad transaktion. Samma regler gäller som vid registrering.</p>
+        <div class="med-panel">
+          <form id="formAndraTransaktion" autocomplete="off">
+            <div class="falt">
+              <label for="atKonto">Konto</label>
+              <input type="text" id="atKonto" name="konto" list="kontoForslag">
+              <span class="hjalp">Skriv eller välj ett av förslagen.</span>
+            </div>
+            <div id="atLista" data-aterstall hidden>
+              <table id="atTabell">
+                <thead><tr><th>Nr</th><th>Datum</th><th class="tal">Belopp</th><th>Kategori</th><th>Beskrivning</th><th></th></tr></thead>
+                <tbody></tbody>
+              </table>
+              <p id="atTom" hidden>Kontot har inga transaktioner än.</p>
+            </div>
+            <h3>Vald transaktion</h3>
+            <div class="falt">
+              <label for="atNr">Nr</label>
+              <input type="text" id="atNr" name="nr" class="kort">
+            </div>
+            <div class="falt">
+              <label for="atDatum">Datum</label>
+              <input type="text" id="atDatum" name="datum" placeholder="ÅÅÅÅ-MM-DD">
+            </div>
+            <div class="falt">
+              <label for="atBelopp">Belopp</label>
+              <span class="med-enhet"><input type="text" id="atBelopp" name="belopp"> kr</span>
+              <span class="hjalp">Positivt = insättning, negativt = utgift.</span>
+            </div>
+            <div class="falt">
+              <label for="atKategori">Kategori</label>
+              <input type="text" id="atKategori" name="kategori" list="kategoriForslag">
+            </div>
+            <div class="falt">
+              <label for="atBeskrivning">Beskrivning</label>
+              <input type="text" id="atBeskrivning" name="beskrivning">
+            </div>
+            <p class="knappar">
+              <button type="submit" class="primar">Spara ändringen</button>
+              <button type="button" class="avbryt">Avbryt</button>
+            </p>
+          </form>
+          <aside class="panel">
+            <p id="atPanelSaldo" data-aterstall hidden></p>
+          </aside>
+        </div>
+      </section>
+
+      <!-- 3.6 Visa konto -->
+      <section class="vy" id="vy-visa-konto" hidden>
+        <h2 tabindex="-1">Visa konto</h2>
+        <p class="ingress">Ett kontos transaktioner och saldo.</p>
+        <form id="formVisaKonto" autocomplete="off">
+          <div class="falt">
+            <label for="vkKonto">Konto</label>
+            <span class="med-enhet">
+              <input type="text" id="vkKonto" name="konto" list="kontoForslag">
+              <button type="submit" class="primar">Visa</button>
+            </span>
+            <span class="hjalp">Skriv eller välj ett av förslagen.</span>
+          </div>
+        </form>
+        <div id="vkResultat" data-aterstall hidden>
+          <h3 id="vkRubrik"></h3>
+          <dl class="uppgifter">
+            <dt>Ingående saldo</dt><dd id="vkIngaende"></dd>
+            <dt>Saldo</dt><dd id="vkSaldo"></dd>
+          </dl>
+          <table id="vkTabell">
+            <thead><tr><th>Nr</th><th>Datum</th><th class="tal">Belopp</th><th>Kategori</th><th>Beskrivning</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <p id="vkTom" hidden>Kontot har inga transaktioner än.</p>
+          <p class="knappar">
+            <button type="button" id="vkRegistrera">Registrera transaktion på kontot</button>
+            <button type="button" id="vkRanta">Beräkna ränta</button>
+          </p>
+        </div>
+      </section>
+
+      <!-- 3.7 Skapa budgetpost -->
+      <section class="vy" id="vy-skapa-budgetpost" hidden>
+        <h2 tabindex="-1">Skapa budgetpost</h2>
+        <p class="ingress">Planera en utgift för en kategori och en månad.</p>
+        <form id="formSkapaBudgetpost" autocomplete="off">
+          <div class="falt">
+            <label for="sbKategori">Kategori</label>
+            <input type="text" id="sbKategori" name="kategori" list="kategoriForslag">
+          </div>
+          <div class="falt">
+            <label for="sbManad">Månad</label>
+            <input type="text" id="sbManad" name="manad" placeholder="ÅÅÅÅ-MM">
+            <span class="hjalp">T.ex. 2026-11.</span>
+          </div>
+          <div class="falt">
+            <label for="sbBelopp">Belopp</label>
+            <span class="med-enhet"><input type="text" id="sbBelopp" name="belopp"> kr</span>
+            <span class="hjalp">Planerad utgift i hela kronor, 0 eller mer.</span>
+          </div>
+          <p class="info">En ny budgetpost får status Planerad. Den räknas i månadssammanställningen först när den har aktiverats.</p>
+          <p class="knappar">
+            <button type="submit" class="primar">Skapa budgetpost</button>
+            <button type="button" class="avbryt">Avbryt</button>
+          </p>
+        </form>
+        <div class="budgetposter"></div>
+      </section>
+
+      <!-- 3.8 Aktivera budgetpost -->
+      <section class="vy" id="vy-aktivera-budgetpost" hidden>
+        <h2 tabindex="-1">Aktivera budgetpost</h2>
+        <p class="ingress">Planerad → Aktiv. En aktiv budgetpost jämförs med utfallet i månadssammanställningen.</p>
+        <form id="formAktiveraBudgetpost" autocomplete="off">
+          <div class="falt">
+            <label for="abKategori">Kategori</label>
+            <input type="text" id="abKategori" name="kategori" list="kategoriForslag">
+          </div>
+          <div class="falt">
+            <label for="abManad">Månad</label>
+            <input type="text" id="abManad" name="manad" placeholder="ÅÅÅÅ-MM">
+          </div>
+          <p class="vald-budgetpost info" data-aterstall hidden></p>
+          <p class="knappar">
+            <button type="submit" class="primar">Aktivera budgetpost</button>
+            <button type="button" class="avbryt">Avbryt</button>
+          </p>
+        </form>
+        <div class="budgetposter"></div>
+      </section>
+
+      <!-- 3.9 Avsluta budgetpost -->
+      <section class="vy" id="vy-avsluta-budgetpost" hidden>
+        <h2 tabindex="-1">Avsluta budgetpost</h2>
+        <p class="ingress">Aktiv → Avslutad. Avslutad är ett sluttillstånd: budgetposten kan inte aktiveras igen och beloppet kan inte ändras.</p>
+        <form id="formAvslutaBudgetpost" autocomplete="off">
+          <div class="falt">
+            <label for="avbKategori">Kategori</label>
+            <input type="text" id="avbKategori" name="kategori" list="kategoriForslag">
+          </div>
+          <div class="falt">
+            <label for="avbManad">Månad</label>
+            <input type="text" id="avbManad" name="manad" placeholder="ÅÅÅÅ-MM">
+          </div>
+          <p class="vald-budgetpost info" data-aterstall hidden></p>
+          <p class="knappar">
+            <button type="submit" class="primar fara">Avsluta budgetpost</button>
+            <button type="button" class="avbryt">Avbryt</button>
+          </p>
+        </form>
+        <div class="budgetposter"></div>
+      </section>
+
+      <!-- 3.10 Ändra budgetpost (belopp) -->
+      <section class="vy" id="vy-andra-budgetpost" hidden>
+        <h2 tabindex="-1">Ändra budgetpost</h2>
+        <p class="ingress">Ändra beloppet på en budgetpost med status Planerad eller Aktiv.</p>
+        <form id="formAndraBudgetpost" autocomplete="off">
+          <div class="falt">
+            <label for="anbKategori">Kategori</label>
+            <input type="text" id="anbKategori" name="kategori" list="kategoriForslag">
+          </div>
+          <div class="falt">
+            <label for="anbManad">Månad</label>
+            <input type="text" id="anbManad" name="manad" placeholder="ÅÅÅÅ-MM">
+          </div>
+          <p class="vald-budgetpost info" data-aterstall hidden></p>
+          <div class="falt">
+            <label for="anbBelopp">Nytt belopp</label>
+            <span class="med-enhet"><input type="text" id="anbBelopp" name="belopp"> kr</span>
+            <span class="hjalp">Hela kronor, 0 eller mer.</span>
+          </div>
+          <p class="knappar">
+            <button type="submit" class="primar">Spara ändringen</button>
+            <button type="button" class="avbryt">Avbryt</button>
+          </p>
+        </form>
+        <div class="budgetposter"></div>
+      </section>
+
+      <!-- Tabellen Budgetposter, som visas i 3.7–3.10 (kopieras in av app.js). -->
+      <template id="mallBudgetposter">
+        <h3>Budgetposter</h3>
+        <p class="statusovergang">Planerad → Aktiv → Avslutad</p>
+        <p class="info">Planerad → Aktiv (Aktivera) → Avslutad (Avsluta). Avslutad är ett sluttillstånd: beloppet kan inte ändras.</p>
+        <table class="budgettabell">
+          <thead><tr><th>Kategori</th><th>Månad</th><th class="tal">Belopp</th><th>Status</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <p class="budget-tom" hidden>Det finns inga budgetposter än.</p>
+      </template>
+
+      <!-- 3.11 Beräkna ränta -->
+      <section class="vy" id="vy-berakna-ranta" hidden>
+        <h2 tabindex="-1">Beräkna ränta</h2>
+        <p class="ingress">Bokför ränta för en månad. Räntan räknas på månadens lägsta saldo enligt kontotypen och bokförs som en transaktion i kategorin Ränta på månadens sista dag. Räntan kan bokföras en gång per konto och månad.</p>
+        <div class="med-panel">
+          <form id="formBeraknaRanta" autocomplete="off">
+            <div class="falt">
+              <label for="brKonto">Konto</label>
+              <input type="text" id="brKonto" name="konto" list="kontoForslag">
+              <span class="hjalp">Skriv eller välj ett av förslagen.</span>
+            </div>
+            <div class="falt">
+              <label for="brManad">Månad</label>
+              <input type="text" id="brManad" name="manad" placeholder="ÅÅÅÅ-MM">
+              <span class="hjalp">T.ex. 2026-11.</span>
+            </div>
+            <p class="knappar">
+              <button type="submit" class="primar">Beräkna ränta</button>
+              <button type="button" class="avbryt">Avbryt</button>
+            </p>
+          </form>
+          <aside class="panel">
+            <div id="brPanel" data-aterstall hidden>
+              <h3>Valt konto</h3>
+              <p id="brPanelKonto"></p>
+              <p id="brPanelSaldo"></p>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- 3.12 Månadssammanställning -->
+      <section class="vy" id="vy-sammanstallning" hidden>
+        <h2 tabindex="-1">Månadssammanställning</h2>
+        <p class="ingress">Utfall mot budget per kategori för en månad.</p>
+        <form id="formSammanstallning" autocomplete="off">
+          <div class="falt">
+            <label for="smManad">Månad</label>
+            <span class="med-enhet">
+              <input type="text" id="smManad" name="manad" placeholder="ÅÅÅÅ-MM">
+              <button type="submit" class="primar">Visa sammanställning</button>
+            </span>
+          </div>
+        </form>
+        <div id="smResultat" data-aterstall hidden>
+          <h3 id="smRubrik"></h3>
+          <table id="smTabell">
+            <thead><tr><th class="tal">Plac</th><th>Kategori</th><th class="tal">Budget</th><th class="tal">Utfall</th><th class="tal">Avvikelse</th><th class="tal">Andel</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <div class="forklaring">
+            <p>Utfall = utgifter minus återbetalningar i kategorin under månaden.</p>
+            <p>Avvikelse = utfall − budget. Ett positivt tal betyder att budgeten är överskriden.</p>
+            <p>Andel = utfall delat med budget, i procent.</p>
+            <p>Bara budgetposter med status Aktiv eller Avslutad räknas som budget.</p>
+            <p>Inkomster och transaktioner i kategorin Överföring redovisas inte.</p>
+          </div>
+        </div>
+        <p id="smTom" data-aterstall hidden></p>
+      </section>
+
+      <!-- 3.13 Spara -->
+      <section class="vy" id="vy-spara" hidden>
+        <h2 tabindex="-1">Spara</h2>
+        <p class="ingress">Spara alla konton, transaktioner och budgetposter till en fil.</p>
+        <p class="falt"><span class="ledtext">Fil</span> <span class="filnamn"></span> <span class="hjalp">Filen skrivs över med programmets data.</span></p>
+        <p class="knappar">
+          <button type="button" id="knappSpara" class="primar">Spara</button>
+          <button type="button" class="avbryt">Avbryt</button>
+        </p>
+      </section>
+
+      <!-- 3.14 Öppna -->
+      <section class="vy" id="vy-oppna" hidden>
+        <h2 tabindex="-1">Öppna</h2>
+        <p class="ingress">Läs in konton, transaktioner och budgetposter från en fil. Allt som finns i programmet nu ersätts av filens innehåll. Om filen har fel ändras ingenting.</p>
+        <p class="falt"><span class="ledtext">Fil</span> <span class="filnamn"></span></p>
+        <p class="knappar">
+          <button type="button" id="knappOppna" class="primar">Öppna</button>
+          <button type="button" id="knappOppnaExempel">Öppna räkneexemplet</button>
+          <button type="button" class="avbryt">Avbryt</button>
+        </p>
+        <p class="hjalp">Räkneexemplet läses från data/hushallExempel.txt. Spara skriver ändå till data/hushall.txt.</p>
+      </section>
+
+      <!-- 3.15 Avsluta -->
+      <section class="vy" id="vy-avsluta" hidden>
+        <h2 tabindex="-1">Avsluta</h2>
+        <p class="ingress">Stäng programmet.</p>
+        <p class="knappar">
+          <button type="button" id="knappAvsluta" class="primar fara">Avsluta programmet</button>
+          <button type="button" class="avbryt">Avbryt</button>
+        </p>
+      </section>
+
+      <!-- Slutvy efter Avsluta (utan meny) -->
+      <section class="vy" id="vy-slut" hidden>
+        <h2 tabindex="-1">Programmet är avslutat</h2>
+        <p class="ingress">Du kan stänga fliken. Starta programmet igen med node src/ui/server.js.</p>
+      </section>
+    </main>
+  </div>
+
+  <!-- Bekräftelse (B-TABORT, B-AVSLUTA-POST, B-OPPNA, B-AVSLUTA). Avbryt har fokus; Esc = Avbryt. -->
+  <div id="bekraftelse" class="bakgrund" hidden>
+    <div class="bekraftelse" role="dialog" aria-modal="true" aria-labelledby="bekraftelseRubrik" aria-describedby="bekraftelseText">
+      <h2 id="bekraftelseRubrik"></h2>
+      <p id="bekraftelseText"></p>
+      <p class="knappar">
+        <button type="button" id="bekraftelseJa" class="primar"></button>
+        <button type="button" id="bekraftelseAvbryt">Avbryt</button>
+      </p>
+    </div>
+  </div>
 </body>
 </html>
